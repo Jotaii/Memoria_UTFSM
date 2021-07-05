@@ -53,6 +53,9 @@ unsigned int FaceContainer::addFace(Face &f){
 	return size++;
 }
 
+vector <Face> FaceContainer::getFacesVec(){
+	return this->facesvec;
+}
 
 //assigns an index for face f. If the face was previously inserted, it will update
 //the found paramater with the index of the face. In this case it will return true.

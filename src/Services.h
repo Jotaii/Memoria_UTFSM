@@ -31,6 +31,12 @@
 #include "Octant.h"
 #include "OctreeEdge.h"
 #include "FaceContainer.h"
+#include "Element.h"
+#include "Hexahedron.h"
+#include "Pyramid.h"
+#include "PyramidBase5.h"
+#include "Tetrahedron.h"
+#include "Prism2.h"
 #include "Visitors/EdgeVisitor.h"
 #include <stdlib.h>
 #include <iostream>
@@ -148,14 +154,15 @@ namespace Clobscode
         //-------------------------------------------------------------------
         //-------------------------------------------------------------------
         static bool ReadOffMesh(string name,
-                                vector<Clobscode::TriMesh> &clobs_inputs){
+                                vector<Clobscode::Point3D> &Points,
+                                vector< vector < unsigned int>> &Faces){
             
             char word [256];
             int np, nf;
             double x,y,z;
             bool skel = false;
-            vector<vector<unsigned int> > allfaces;
-            vector<Point3D> tri_pts;
+            // vector<vector<unsigned int> > allfaces;
+            // vector<Point3D> tri_pts;
             
             FILE *file = fopen(name.c_str(),"r");
             
@@ -194,7 +201,8 @@ namespace Clobscode
             }
             
             //read each node
-            tri_pts.reserve(np);
+            // tri_pts.reserve(np);
+            Points.reserve(np);
             
             for( int i=0;i<np;i++){
                 std::fscanf(file,"%s",word);
@@ -204,11 +212,12 @@ namespace Clobscode
                 std::fscanf(file,"%s",word);
                 z=atof(word);
                 Point3D p (x,y,z);
-                tri_pts.push_back(p);
+                Points.push_back(p);
                 fgets(word,256,file);
             }
             
-            allfaces.reserve(nf);
+            // allfaces.reserve(nf);
+            Faces.reserve(np);
             //number of face points
             int nfp;
             for( int i=0;i<nf;i++){
@@ -218,20 +227,165 @@ namespace Clobscode
                 for(unsigned int j=0;j<nfp;j++){
                     std::fscanf(file,"%i",&fpts[j]);
                 }
-                allfaces.push_back(fpts);
+                Faces.push_back(fpts);
                 //read any other data in the line
                 fgets(word,256,file);
             }
             fclose(file);
             
-            TriMesh tm (tri_pts, allfaces);
-            clobs_inputs.push_back(tm);
+            // TriMesh tm (tri_pts, allfaces);
+            // clobs_inputs.push_back(tm);
             
             return true;
         }
         
-		//-------------------------------------------------------------------
-		//-------------------------------------------------------------------
+        //--------------------------------------------------------------------
+        static bool readVtk(string name, vector<Point3D>&points, vector<vector< unsigned int>> &faces){
+            
+            char word [256];
+            unsigned int cant,type;
+            double x,y,z;
+            vector < Element *> elements;
+            FILE *file = fopen(name.c_str(),"r");
+            
+            while(true){
+                if(!fscanf(file,"%s",word)){
+                    fclose(file);
+                    return false;
+                }
+                if(!strcmp(word,"UNSTRUCTURED_GRID\0"))
+                    break;
+            }
+            
+            //read word Points
+            fscanf(file,"%s",word);
+            
+            fscanf(file,"%u",&cant);
+            points.reserve(cant);
+            
+            //read word float
+            fscanf(file,"%s",word);
+            
+            if(cant<=0){
+                cerr << "warning: no nodes were found\n";
+                fclose(file);
+                return true;
+            }
+            
+            //read the first point (to initialize the bounds)
+            fscanf(file,"%s",word);
+            x=atof(word);
+            fscanf(file,"%s",word);
+            y=atof(word);
+            fscanf(file,"%s",word);
+            z=atof(word);
+            Point3D p (x,y,z);
+            
+            points.push_back(p);
+            
+            for(int i=1;i<cant;i++){
+                fscanf(file,"%s",word);
+                x=atof(word);
+                fscanf(file,"%s",word);
+                y=atof(word);
+                fscanf(file,"%s",word);
+                z=atof(word);
+                Point3D p (x,y,z);
+            
+                points.push_back(p);
+                
+            }
+            
+            while(true){
+                if(!fscanf(file,"%s",word)){
+                    fclose(file);
+                    return false;
+                }
+                if(!strcmp(word,"CELLS\0"))
+                    break;
+            }
+            
+            fscanf(file,"%u",&cant);
+            elements.reserve(cant);
+            fscanf(file,"%s",word);
+            
+            unsigned int idx;
+            
+            for(int i=0;i<cant;i++){
+                
+                Element *element;
+                fscanf(file,"%s",word);
+                if (word[0]=='8') {
+                    vector<unsigned int> epts;
+                    epts.reserve(8);
+                    for(int j=0;j<8;j++){
+                        fscanf(file,"%u",&idx);
+                        epts.push_back(idx);
+                    }
+                    element = new Hexahedron(epts);
+                }
+                else if(word[0]=='4'){
+                    vector<unsigned int> epts;
+                    epts.reserve(4);
+                    for(int j=0;j<4;j++){
+                        fscanf(file,"%u",&idx);
+                        epts.push_back(idx);
+                    }
+                    element = new Tetrahedron(epts);
+                }
+                else if(word[0]=='5'){
+                    vector<unsigned int> epts;
+                    epts.reserve(5);
+                    for(int j=0;j<5;j++){
+                        fscanf(file,"%u",&idx);
+                        epts.push_back(idx);
+                    }
+                    element = new Pyramid(epts);
+                }
+                else if(word[0]=='6'){
+                    vector<unsigned int> epts;
+                    epts.reserve(6);
+                    for(int j=0;j<6;j++){
+                        fscanf(file,"%u",&idx);
+                        epts.push_back(idx);
+                    }
+                    element = new Prism(epts);
+                }
+                else{
+                    continue;
+                }
+                
+                elements.push_back(element);
+            }
+            
+            fclose(file);
+
+            FaceContainer FC;
+            //save faces with neigbhoring information
+            for(unsigned int i=0; i<elements.size(); i++){
+                //An EnhancedElement is an Element with optimizations for
+                //removing and visualizing.
+                elements[i]->computeBbox(points);
+                for(int j=0;j<elements[i]->numberOfFaces();j++){
+                    
+                    vector<unsigned int> fpts = elements[i]->getFacePoints(j);
+                    Face face(fpts);
+                    int fid = FC.addFace(face);
+                    FC.getFace(fid).addElement(i);
+                    //add the face to the EnhancedElement
+                    elements[i]->addFace(fid);
+                }
+            }
+            //REVISAR!!!!
+            for (int fidx=0; fidx < FC.getFacesVec().size(); fidx++){
+                if(FC.getFace(fidx).numberOfElements()==1){
+                    faces.push_back(FC.getFace(fidx).getPoints());
+                }
+            }
+            return true;
+        }
+
+
 		static bool ReadMdlMesh(std::string name,
 								  vector<Clobscode::TriMesh> &clobs_inputs){
 

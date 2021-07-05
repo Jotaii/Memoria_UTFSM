@@ -28,6 +28,8 @@ public:
     virtual void updatePointIndex(unsigned int oldp, unsigned int newp,
                                   list<unsigned int> &fs);
     
+    virtual vector <Face> getFacesVec();
+
     virtual void clear();
     
 protected:
