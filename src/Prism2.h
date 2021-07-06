@@ -27,8 +27,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/gpl.txt>
  */
 
-#ifndef Prism_h
-#define Prism_h 1
+#ifndef Prism2_h
+#define Prism2_h 1
 
 #include "Element.h"
 

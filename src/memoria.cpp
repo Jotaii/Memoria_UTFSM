@@ -197,24 +197,27 @@ int main(int argc,char** argv){
         return 0;
     }
 
-    else {
-        for (int i=0; i<Puntos.size(); i++){
-            std::cout << Puntos[i] << "\n";
-        }
-        vector <Face> FVector;
-        for (int i=0;i<VUI.size(); i++){
-            Face Ftemp(VUI[i]);
-            FVector.push_back(Ftemp);
-            FVector[i].print();
-        }
-    }
+    // else {
+    //     // for (int i=0; i<Puntos.size(); i++){
+    //     //     std::cout << Puntos[i] << "\n";
+    //     // }
+    //     vector <Face> FVector;
+    //     for (int i=0;i<VUI.size(); i++){
+    //         Face Ftemp(VUI[i]);
+    //         FVector.push_back(Ftemp);
+    //         // FVector[i].print();
+    //     }
+
+    //     std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
+    //     std::cout << "Numero de caras: " << FVector.size() << "\n";
+    // }
 	
-    // POR VERIFICAR ESTO
-	// //give default output name if non is provided
-	// if (!out_name_given) {
-	// 	unsigned int last_point = in_name.find_last_of(".");
-	// 	out_name = in_name.substr(0,last_point);
-	// }
+    
+	//give default output name if non is provided
+	if (!out_name_given) {
+		unsigned int last_point = in_name.find_last_of(".");
+		out_name = in_name.substr(0,last_point);
+	}
 	
     // auto start_time = chrono::high_resolution_clock::now();
     
@@ -222,6 +225,20 @@ int main(int argc,char** argv){
 	// Clobscode::Mesher mesher;
     // Clobscode::FEMesh output;
 
+    // POR VERIFICAR ESTO
+    vector <Face> FVector;
+    for (int i=0;i<VUI.size(); i++){
+        Face Ftemp(VUI[i]);
+        FVector.push_back(Ftemp);
+        std:cout << "Face\t" << i << ":\t";
+        for (int j=0; j<FVector[i].getPoints().size(); j++){
+            std::cout << FVector[i].getPoints()[j] << "\t";
+        };
+        std::cout << "\n";
+    }
+
+    std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
+    std::cout << "Numero de caras: " << FVector.size() << "\n";
     
     // if (getfem) {
     //     // Services::WriteMeshGetfem(out_name,output);

@@ -377,11 +377,18 @@ namespace Clobscode
                 }
             }
             //REVISAR!!!!
+            int cantidad_caras = 0, cantidad_superficiales = 0;
             for (int fidx=0; fidx < FC.getFacesVec().size(); fidx++){
+                
                 if(FC.getFace(fidx).numberOfElements()==1){
+                    // std::cout << fidx << ":" << FC.getFace(fidx).numberOfElements() << "\n";
+                    cantidad_superficiales++;
                     faces.push_back(FC.getFace(fidx).getPoints());
                 }
+                cantidad_caras++;
             }
+            std::cout << "Cantidad de caras de la malla: " << cantidad_caras << "\n";
+            std::cout << "Cantidad de caras superficiales: " << cantidad_superficiales << "\n";
             return true;
         }
 
