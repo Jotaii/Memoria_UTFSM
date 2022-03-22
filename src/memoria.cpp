@@ -8,6 +8,8 @@
 #include "RefinementAllRegion.h"
 #include "Point3D.h"
 #include "NodeProjection.h"
+#include "NormalRepair.h"
+#include "AdvancingPoint.h"
 #include <string>
 #include <cctype>
 #include <time.h>
@@ -47,12 +49,112 @@ void endMsg(){
     cout << "    -i save output mesh in MVM ASCII format (mvm)\n";
     cout << "    -m save output mesh in M3D ASCII format (m3d)\n";
 }
+// Funciones se pasaron al archivo NormalRepair.cpp
+// bool repair_needed(unsigned int p1, unsigned int p2, vector<unsigned int> Face){
+//     for (int pts=0; pts<Face.size(); pts++){
+//         if (pts == Face.size()-1){
+//             if (Face[pts] == p1 && Face[0] == p2)return true;
+//         }
+//         else{
+//             if (Face[pts] == p1 && Face[pts+1] == p2)return true;
+//         }
+//     }
+//     return false;
+// }
 
+// void repair_face(vector<unsigned int> &F){
+//     unsigned int temp;
+//     //creo que siempre se cambia el ultimo con el segundo, verificar!
+//     if (F.size() == 3){
+//         temp = F[2];
+//         F.at(2) = F[1];
+//         F.at(1) = temp;
+//     }
+//     else if (F.size() == 4){
+//         temp = F[3];
+//         F.at(3) = F[1];
+//         F.at(1) = temp;
+//     }
+// }
+
+// bool allchecked(vector<unsigned int> Checked){
+//     for (int i=0; i<Checked.size();i++){
+//         if (Checked[i] == 0){
+//             return false;
+//         }
+//     }
+//     return true;
+// }
+
+// int buscar_cara_comun(unsigned int p1, unsigned int p2, unsigned int faceIdx, vector<vector<unsigned int>>Faces){
+//     int contador = 0;
+//     for (int faceidx=0; faceidx < Faces.size(); faceidx++){
+//         int contador = 0;
+//         if (faceIdx != faceidx){
+//             for (int punto_en_cara_idx=0; punto_en_cara_idx < Faces[faceidx].size(); punto_en_cara_idx++){
+//                 if (Faces[faceidx][punto_en_cara_idx] == p1) contador++;
+//                 if (Faces[faceidx][punto_en_cara_idx] == p2) contador++;
+//             }
+//             if (contador == 2) return faceidx;
+//         }
+//     }
+//     return -1;
+// }
+
+void print(vector<Face> V){
+    for (int i=0; i<V.size(); i++){
+        cout << i <<" | [ ";
+        for (int j=0; j < V[i].getPoints().size(); j++){
+            cout << V[i].getPoints()[j];
+            if (j != V[i].getPoints().size()-1){
+                cout << ", ";
+            }
+        }
+        cout << "]\n";
+    }
+}
+
+void print(vector <unsigned int>V){
+    cout << "[ ";
+    for (int j=0; j < V.size(); j++){
+        cout << V[j];
+        if (j != V.size()-1){
+            cout << ", ";
+        }
+    }
+    cout << "]\n";
+}
+
+// int prueba_reparacion_rec(unsigned int p1, unsigned int p2, unsigned int faceIdx, 
+//                         vector<vector< unsigned int>> &Faces, 
+//                         vector<unsigned int> &Checked){
+//     if (allchecked(Checked)==true){
+//         // cout << "allcheck true\n"; 
+//         return 1;
+//     }
+//     else{
+//         int aux = buscar_cara_comun(p1,p2,faceIdx,Faces);
+//         // cout << aux << " " << p1 << " " << p2 << " " << faceIdx << "\n";
+//         if(aux != -1){ //si es todo conexo siempre habran dos caras que posean los mismos puntos (presuncion fija para memoria)
+//             if (Checked[aux] == 1){
+//                 return 1;
+//             }
+//             else{
+//                 if (repair_needed(p1,p2,Faces[aux])==true){
+//                     repair_face(Faces[aux]);
+//                 }
+//                 Checked.at(aux) = 1;
+//                 // prueba_reparacion_rec(Faces[aux][0], Faces[aux][1], aux, Faces, Checked);
+//             }
+//         }
+//     }
+//     return -1;
+// }
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 
 int main(int argc,char** argv){
-
+    
     if (argc<4) {
         endMsg();
         return 0;
@@ -132,7 +234,7 @@ int main(int argc,char** argv){
         switch (argv[i][1]) {
             case 'd': //para archivos .mdl
                 in_name = argv[i+1];
-                if (!Services::ReadMdlMesh(in_name,inputs)) {
+                if (!Services::ReadMdlMesh(in_name,Puntos, VUI)) {
                     std::cerr << "couldn't read file " << argv[i+1] << std::endl;
                     return 1;
                 }
@@ -223,76 +325,87 @@ int main(int argc,char** argv){
     
     // //Generate the mesh following the above constraints.
 	// Clobscode::Mesher mesher;
-    // Clobscode::FEMesh output;
+    Clobscode::FEMesh output;
 
-    // POR VERIFICAR ESTO
-    vector <Face> FVector;
-    for (int i=0;i<VUI.size(); i++){
-        Face Ftemp(VUI[i]);
-        FVector.push_back(Ftemp);
-        std:cout << "Face\t" << i << ":\t";
-        for (int j=0; j<FVector[i].getPoints().size(); j++){
-            std::cout << FVector[i].getPoints()[j] << "\t";
-        };
-        std::cout << "\n";
-    }
 
-    std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
-    std::cout << "Numero de caras: " << FVector.size() << "\n";
-    
-    // if (getfem) {
-    //     // Services::WriteMeshGetfem(out_name,output);
-    //     std::cout << "Esto imprime un output en gmf\n"; 
+    // // POR VERIFICAR ESTO
+    // vector <Face> FVector;
+    // for (int i=0;i<VUI.size(); i++){
+    //     Face Ftemp(VUI[i]);
+    //     FVector.push_back(Ftemp);
     // }
 
-    // if (vtkformat || !oneout) {
-    //     std::cout << "Esto imprime un output en vtk\n";
+    // std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
+    // std::cout << "Numero de caras: " << FVector.size() << "\n";
+    
+    // // if (getfem) {
+    // //     // Services::WriteMeshGetfem(out_name,output);
+    // //     std::cout << "Esto imprime un output en gmf\n"; 
+    // // }
+
+    // //inicializacion vector de control de nodos
+    // vector <unsigned int> nodesInSurface;
+    // for (int i=0; i< Puntos.size();i++){
+    //     nodesInSurface.push_back(0);
+    // }
+    
+
+    
+    // for (int fidx=0; fidx< FVector.size(); fidx++){        
+    //     for (int nidx=0; nidx < nodesInSurface.size(); nidx++){
+    //         if(FVector[fidx].hasPoint(nidx) && nodesInSurface[nidx]==0){
+    //             nodesInSurface.at(nidx) = 1;
+    //         }
+    //     }
+    // }
+    
+    // for (int i=0; i< nodesInSurface.size();i++){
+    //     std::cout << nodesInSurface[i] << "-";
+    // }
+    // std::cout << "\n";
+    
+    if (vtkformat || !oneout) {
+        std::cout << "Esto imprime un output en vtk\n";
+        unsigned int dist = 10;
+        AdvancingPoint AP(Puntos, VUI); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
+        cout << "oldpoints\t\tnormals\n";
+        for (int i=0; i<AP.getPoints().size(); i++){
+            cout << AP.getPoints()[i] << "\t" << AP.getNormals()[i].getNormal() << "\n";
+        }
+        //agregar nuevos puntos y elementos a los arreglos
+        cout << "newpoints\n";
+        for (int i=0; i<AP.getNewPoints().size(); i++){
+            Puntos.push_back(AP.getNewPoints()[i]);
+            cout << AP.getNewPoints()[i] << "\n";
+        }
+        vector < vector<unsigned int>> T1 = AP.getFaces();
+        for (int i=0; i<AP.getFaces().size(); i++){ //evaluar cambio de nombre de getFaces a getElems
+            VUI.push_back(AP.getFaces()[i]);
+        }
         
-    //     for (int trimesh_index=0; trimesh_index< inputs.size(); trimesh_index++){
-    //         // vector <Point3D> Puntos = inputs[trimesh_index].getPoints();
-    //         // vector <vector <unsigned int>> VUI = inputs[trimesh_index].getFaces().getPoints(); //ver como capturar el vector de caras
-            
-    //         //ESTO NO ESTA DEL TODO PENSADO------------------------------------
-    //         vector <Face> FVector;
+        //pruebas de output generado
+        output.setElements(T1);
+        output.setPoints(Puntos);
 
-    //         cout << "Nodes:\n";
-    //         for (int i=0; i<Puntos.size(); i++){
-    //             cout << i << " (" << Puntos[i] << ")\n";
-    //         }
-
-    //         cout << "\nFaces:\n";
-    //         for (int i=0; i<VUI.size(); i++){
-    //             Face TempFace(VUI[i]);
-    //             FVector.push_back(TempFace);
-    //             cout << "{ ";
-    //             for (int j=0; j < TempFace.getPoints().size(); j++){
-    //                 cout << TempFace.getPoints()[j] << "\t";
-    //             }
-    //             cout << "}\n";
-                
-    //         }
-    //         cout << "\n\nResultado Calculo de normales:\n";
-    //         vector <NodeProjection> NodeProjectionV;
-    //         //Funcion que inicializa un objeto del tipo NodeProjection
-    //         for (int i=0; i<Puntos.size(); i++){
-    //             NodeProjection NP(i, Puntos[i], FVector);
-    //             //funcion que calcula la normal acumulada de las caras que involucran al nodo NP
-    //             NP.CalcPreNormal(Puntos);
-    //             //Funcion que normaliza el valor en la normal acumulada de las caras que involucran al nodo NP
-    //             NP.Normalize();
-    //             //Funcion de utilidad que imprime toda la informacion en el objeto NP
-    //             NP.print();
-    //             NodeProjectionV.push_back(NP);
-    //         }
+        // Services::WriteVTK(out_name, output);
+        Services::WriteVTK(out_name, Puntos, T1);
+        // Services::WriteVTK(out_name, Puntos, VUI);
+        Services::WriteMeshGetfem(out_name, output);
+        
+        
+        
+        // for (int i=0; i < NodeProjectionVector.size();i++){
+        //     std::cout << "Nodo "<< i << ": (" << NodeProjectionVector[i].getNormal() << ")\n";
+        // }
     //         //---------------------------------------------------------------
     //         //Aun no esta funcionando esto, es una idea
 
     //         output.setElements(VUI);
     //         output.setPoints(Puntos);
-    //         // Services::WriteVTK(out_name,output);
+    //         Services::WriteVTK(out_name,output);
     //     }
         
-    // }
+    }
 
     // if (m3dfor) {
     //     // Services::WriteOutputMesh(out_name,output);
@@ -311,49 +424,7 @@ int main(int argc,char** argv){
     //FIN CODIGO PROFE
 
     // MI CODIGO
-    // Point3D a(-1,0,-1);
-    // Point3D b(-1,0,1);
-    // Point3D c(1,0,1);
-    // Point3D d(1,0,-1);
-    // Point3D e(2,1,0);
-    // vector <Point3D> Puntos = {a,b,c,d,e};
 
-    // vector <vector <unsigned int>> VUI = {{0,1,2,3}, {3,2,4}};
-
-    // vector <Face> FVector;
-
-    // cout << "Nodes:\n";
-    // for (int i=0; i<Puntos.size(); i++){
-    //     cout << i << " (" << Puntos[i] << ")\n";
-    // }
-
-    // cout << "\nFaces:\n";
-    // for (int i=0; i<VUI.size(); i++){
-    //     Face TempFace(VUI[i]);
-    //     FVector.push_back(TempFace);
-    //     cout << "{ ";
-    //     for (int j=0; j < TempFace.getPoints().size(); j++){
-    //         cout << TempFace.getPoints()[j] << "\t";
-    //     }
-    //     cout << "}\n";
-        
-    // }
-    // cout << "\n\nResultado Calculo de normales:\n";
-    // vector <NodeProjection> NodeProjectionV;
-    // //Funcion que inicializa un objeto del tipo NodeProjection
-    // for (int i=0; i<Puntos.size(); i++){
-    //     NodeProjection NP(i, Puntos[i], FVector);
-    //     //funcion que calcula la normal acumulada de las caras que involucran al nodo NP
-    //     NP.CalcPreNormal(Puntos);
-    //     //Funcion que normaliza el valor en la normal acumulada de las caras que involucran al nodo NP
-    //     NP.Normalize();
-    //     //Funcion de utilidad que imprime toda la informacion en el objeto NP
-    //     NP.print();
-    //     NodeProjectionV.push_back(NP);
-    // }
-    
-
-   
-    
     return 0;
 }
+

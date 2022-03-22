@@ -80,7 +80,7 @@ namespace Clobscode
         
         //Now that we have all the elements, we can save the octant mesh.
         unsigned int nels = octants.size();
-        Services::WriteOctreeMesh(name,oct_points,octants,octreeEdges,nels,gt);
+        // Services::WriteOctreeMesh(name,oct_points,octants,octreeEdges,nels,gt);
         
         detectInsideNodes(input);
         
@@ -149,7 +149,7 @@ namespace Clobscode
         
         //Now that we have all the elements, we can save the octant mesh.
         unsigned int nels = octants.size();
-        Services::WriteOctreeMesh(name,points,octants,octreeEdges,nels,gt);
+        // Services::WriteOctreeMesh(name,points,octants,octreeEdges,nels,gt);
 
         
         //projectCloseToBoundaryNodes(input);

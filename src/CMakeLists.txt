@@ -41,7 +41,7 @@ set(SOURCE_FILES MeshPoint Point3D TriMesh Octant OctreeEdge HexRotation
         FaceDiagonal SurfPrism SurfPyramid SurfHexahedron SurfTetrahedron 
 	SurfaceEdge GeometricTransform Face FaceContainer 
         Element Hexahedron Pyramid PyramidBase5 Tetrahedron Prism2
-        NodeProjection memoria 
+        NodeProjection NormalRepair AdvancingPoint NewPointRef memoria 
         Visitors/Visitor Visitors/SplitVisitor Visitors/EdgeVisitor 
 	Visitors/IntersectionsVisitor
         Visitors/OneIrregularVisitor Visitors/PointMovedVisitor

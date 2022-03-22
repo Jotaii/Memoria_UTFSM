@@ -85,13 +85,17 @@ NodeProjection::NodeProjection(unsigned int Node_index, Point3D Node, vector<Fac
     this->NodeSrc = Node;
     this->Node_index = Node_index;
     vector <vector <unsigned int>> FacesIndex;
+    // FacesIndex.reserve(1000000);
+    // std::cout << "["<< this->NodeSrc << "]@"<< this->Node_index <<"\t";
     for(unsigned int i=0; i < fv.size(); i++){
+        // std::cout << "Checking face " << i << " with points size array" << fv[i].getPoints().size() << "\n";
         for(unsigned int j=0; j < fv[i].getPoints().size(); j++){
             if(fv[i].getPoints()[j] == Node_index){
                 this->FacesInvolved.push_back(fv[i].getPoints());
                 break;
             }
         }
+        
     }
     // cout << "Caras que poseen el nodo " << Node_index << ": \n";
     // for (int i=0; i < this->FacesInvolved.size(); i++){
@@ -127,7 +131,7 @@ unsigned int NodeProjection::NextNode(vector <unsigned int> FaceNodes){
     for (int i = 0 ; i < FaceNodes.size(); i++){
         // cout << i << " " << this->Node_index << "\n";
         if(FaceNodes[i] == this->Node_index){
-            if (i == FaceNodes.size()){
+            if (i == FaceNodes.size()-1){
                 return (FaceNodes[0]);
             }
             return (FaceNodes[i+1]);
@@ -158,11 +162,15 @@ unsigned int NodeProjection::PreviousNode(vector <unsigned int> FaceNodes){
 void NodeProjection::CalcPreNormal(vector <Point3D> Puntos, unsigned int debug){
     Point3D pointTemp;
     if (debug != 0){
-            cout << "[DEBUG] Calculo de las productos vectoriales por cara para el nodo " << this->NodeSrc << "\n";
+            cout << "\n\n[DEBUG] Calculo de las productos vectoriales por cara para el nodo " << this->NodeSrc << " de indice " <<  this->Node_index << "\n";
         }
     for (int i=0; i < this->FacesInvolved.size(); i++){
         if (debug != 0){
             cout << "[DEBUG] Cara " << i << "|"; 
+            for(unsigned k=0; k<FacesInvolved[i].size(); k++){
+                cout << FacesInvolved[i][k] << " ";
+            }
+            cout << "|";
         }
         pointTemp = (Puntos[NextNode(this->FacesInvolved[i])]-this->NodeSrc) ^ (Puntos[PreviousNode(this->FacesInvolved[i])]-this->NodeSrc);
         if (debug != 0){
@@ -184,7 +192,9 @@ void NodeProjection::MeanNormal(){
 }
 
 void NodeProjection::Normalize(){
+    double a = this->Normal.Norm();
     this -> Normal = this->Normal/this->Normal.Norm();
+    // std::cout << "[DEBUG] Vector unitario: (" << this -> Normal << ") Aplicando la norma: " << a << "\n\n\n";
 }
 
 void NodeProjection::print(vector <unsigned int>Fv){
@@ -195,4 +205,11 @@ void NodeProjection::print(vector <unsigned int>Fv){
     cout << "]";
 }
 
+Point3D NodeProjection::getNormal(){
+    return this->Normal;
+}
+
+vector<vector<unsigned int >> NodeProjection::getFacesInvolved(){
+    return this->FacesInvolved;
+}
 // };

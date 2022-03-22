@@ -55,6 +55,10 @@ class NodeProjection{
 
         void Normalize();
 
+        Point3D getNormal();
+
+        vector<vector<unsigned int>> getFacesInvolved();
+
         void print(vector <unsigned int>Fv);
 
 };

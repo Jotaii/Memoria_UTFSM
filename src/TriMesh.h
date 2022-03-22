@@ -63,7 +63,9 @@ namespace Clobscode
 		
 		virtual Point3D getProjection(const Point3D & pPoint, 
 								   list<unsigned int> &lFaces);
-								 
+		
+		virtual vector <Point3D> getmEdgePseudoNormals();
+
 		virtual Point3D getCentroid();
 		
 		virtual vector<Point3D> getNormals();
@@ -130,6 +132,10 @@ namespace Clobscode
         mCentroid.Y() = (bounds[1]+bounds[4])/2;
         mCentroid.Z() = (bounds[2]+bounds[5])/2;
 		return mCentroid;
+	}
+
+	inline vector <Point3D>  TriMesh::getmEdgePseudoNormals(){
+		return mEdgePseudoNormals;
 	}
 	   
 }
