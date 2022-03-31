@@ -449,7 +449,6 @@ namespace Clobscode
     //--------------------------------------------------------------------------------
 	bool TriMesh::pointIsInMesh(const Point3D & pPoint ){
 		// define if a point is inside a mesh or not
-		
 		Point3D caca = pPoint;
 		//cout << "testing point " << caca;
 		
@@ -486,10 +485,75 @@ namespace Clobscode
 				iFaceEdgeNode = faceEdgeNode;
 			}
 		}
-		
+		std:: cout << mTriangles[closestTriangle-1].getPoints()[0] << " " << mTriangles[closestTriangle-1].getPoints()[1] << " " << mTriangles[closestTriangle-1].getPoints()[2] << "\n";
+		std::cout << "CT: " << closestTriangle-1 << "\n";
 		return bIsIn;
 	}
 	
+	vector <unsigned int> TriMesh::pointIsInMeshIdx(const Point3D & pPoint ){
+		// vector de salida:
+		//	+ primer elemento corresponde a booleano de contencion 
+		//  + segundo elemento al indice de cara triangular mas cercana al out_bbox point
+		//	+ tercer elemento si es que la cara en cuestion esta bien orientada
+		vector <unsigned int> output;
+
+		// define if a point is inside a mesh or not
+		Point3D caca = pPoint;
+		//cout << "testing point " << caca;
+		
+		// index of the closest triangle
+		unsigned int closestTriangle = 0;
+		// closest point on the triangle (on triangle face, on edge, or vertice)
+		Point3D pProjP;
+		// distance to this closest point (always positive)
+		double pDist = 0;
+		//current closest distance: positive infinity
+		double closestDist = numeric_limits<double>::infinity();
+		// true if this node is inside the surface
+		bool pIsIn = false;
+		bool bIsIn = false;
+		// 0 if close to a face, 1 if close to an edge, 2 if close to a vertice
+		int faceEdgeNode = 0;
+		int iFaceEdgeNode = 0;
+		
+		if (mTriangles.empty()) {
+			output.push_back(0);
+			return output;
+		}
+		
+		// browsing all the surface faces for min distance.
+		for (unsigned int iSurfF = 0; iSurfF < mTriangles.size(); iSurfF++) {
+			// computing the distance for this face (triangle)
+			SignedDistToTriangle(pPoint,iSurfF,closestDist,pDist,pProjP,pIsIn,faceEdgeNode);
+			
+			pDist = fabs(pDist);
+			
+			if (pDist < closestDist) {
+				closestTriangle = iSurfF;
+				closestDist = pDist;
+				bIsIn = pIsIn;
+				iFaceEdgeNode = faceEdgeNode;
+			}
+		}
+		// std:: cout << mTriangles[closestTriangle-1].getPoints()[0] << " " << mTriangles[closestTriangle-1].getPoints()[1] << " " << mTriangles[closestTriangle-1].getPoints()[2] << "\n";
+		// std::cout << "CT: " << closestTriangle-1 << "\n";
+		
+		std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[0]]) << "\n";
+		std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[1]]) << "\n";
+		std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[2]]) << "\n";
+		
+
+		output.push_back(bIsIn);
+		output.push_back(closestTriangle);
+		if (caca.normalize().DistanceTo(this->getNormals()[closestTriangle].normalize()) > caca.normalize().DistanceTo(Point3D(0,0,0))){
+			output.push_back(1);
+		}
+		else{
+			output.push_back(0);
+		}
+		return output;
+	}
+
 	//--------------------------------------------------------------------------------
     //--------------------------------------------------------------------------------
 	bool TriMesh::pointIsInMesh(const Point3D & pPoint, list<unsigned int> &lFaces){
@@ -520,6 +584,7 @@ namespace Clobscode
 		//current_min_dis
 		bool one_good = false;
 		
+
 		// browsing all the surface faces
 		for (iSurfF = lFaces.begin(); iSurfF!=lFaces.end(); iSurfF++)
 		{
@@ -550,6 +615,8 @@ namespace Clobscode
 				}
 				one_good = true;
 			}
+
+			
 		}
 		
 		return bIsIn;

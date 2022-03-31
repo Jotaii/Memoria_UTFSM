@@ -1,6 +1,6 @@
 #ifndef NormalRepair_h
 #define NormalRepair_h 1
-#define POINT_OFFSET 4
+#define POINT_OFFSET 40
 
 #include <string>
 #include <cctype>
@@ -77,9 +77,9 @@ class NormalRepair{
 
         int buscar_cara_comun(unsigned int p1, unsigned int p2, unsigned int faceIdx, vector<Face>Faces);
 
-        // void print(vector<vector<unsigned int>> V);
+        void print(vector<vector<unsigned int>> V);
 
-        // void print(vector <unsigned int>V);
+        void print(vector <unsigned int>V, unsigned int nl=0);
 
         int prueba_reparacion_rec(unsigned int p1, unsigned int p2, unsigned int faceIdx, 
                                 vector<Face> &Faces, 

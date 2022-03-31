@@ -59,6 +59,8 @@ namespace Clobscode
 		virtual bool pointIsInMesh(const Point3D & pPoint, 
 								   list<unsigned int> &lFaces);
 		
+		vector <unsigned int >pointIsInMeshIdx(const Point3D & pPoint );
+		
 		virtual Point3D getProjection(const Point3D &pPoint);
 		
 		virtual Point3D getProjection(const Point3D & pPoint, 

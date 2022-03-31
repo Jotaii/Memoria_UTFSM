@@ -180,7 +180,9 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
     this -> arr_points = Puntos;
     this -> arr_faces = VUI;
     
-    std::cout << Puntos.size() << "\t" << NPR_arr.size() << "\n";
+    // std::cout << Puntos.size() << "\t" << NPR_arr.size() << "\n";
+
+
     //Falta:
     //      1. agregar los puntos new_points al arreglo de puntos -- LISTO
     //      2. agregar los puntos (por indice) a la cara correspondiente del VUI
@@ -199,20 +201,20 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
         }
     }
 
-    for (unsigned int i=0; i< this->arr_faces.size(); i++){
-        for (unsigned int j=0; j< this->arr_faces[i].size(); j++){
-            std::cout << arr_faces[i][j] << "\t";
-        }
-        std::cout << "\n";
-    }
+    // for (unsigned int i=0; i< this->arr_faces.size(); i++){
+    //     for (unsigned int j=0; j< this->arr_faces[i].size(); j++){
+    //         std::cout << arr_faces[i][j] << "\t";
+    //     }
+    //     std::cout << "\n";
+    // }
 
-    for (unsigned int i=0; i< this->arr_faces.size(); i++){
-        for (unsigned int j=0; j< this->arr_faces[i].size(); j++){
-            std::cout << arr_faces[i][j] << "\t";
-        }
-        std::cout << "\n";
-    }
-    std::cout << "\n";
+    // for (unsigned int i=0; i< this->arr_faces.size(); i++){
+    //     for (unsigned int j=0; j< this->arr_faces[i].size(); j++){
+    //         std::cout << arr_faces[i][j] << "\t";
+    //     }
+    //     std::cout << "\n";
+    // }
+    // std::cout << "\n";
 
 }
 
