@@ -30,39 +30,6 @@ using Clobscode::Point3D;
 using Clobscode::TriMesh;
 
 
-
-/* 
-Funcion para filtrar malla de volumen
-input: archivo.oct
-output: archivo de formato conveniente
-funcionamiento:
-    1. obtener las caras de la malla de volumen
-    2. usar funcion getFaces de Services.h para obtener las caras de la malla
-    3. filtrar las caras que solo pertenezcan a un elemento geometrico
-    4. retornar los vectores de nodos y los vectores de caras.
-*/
-
-/*
-Funcion para calcular las normales por nodo:
-input: vector de nodos y vector de caras
-output: vector con las normales de cada nodo
-funcionamiento:
-    1. para cada nodo, buscar todas las caras que lo contienen (almacenarlas en un vector dentro de un nuevo objeto creado para la memoria)
-    2. por cada nodo, almacenar en un vector las normales preliminares (correspondiente a las normales por cara para cada nodo)
-    3. para cada nodo, promediar las normales preliminares (sum(normales)/cantidad_normales)
-    4. para cada nodo, normalizar el vector anterior.
-    5. regresar el vector con la estructura nueva que tiene la normal de cada nodo
-*/
-
-/*
-Funcion para proyectar los nuevos puntos
-input: vector de estructuras nuevas, vector de puntos, vector de caras
-output: vector de nodos, vector de vectores con elementos de volumen
-funcionamiento:
-    1. para cada normal en la estructura de nodos, agregar a la lista de puntos los nodos nuevos
-    2. para cada nodo de ... 
-*/
-
 using namespace std;
 using std::atoi;
 using std::cout;
@@ -70,7 +37,6 @@ using std::endl;
 using std::cerr;
 using std::vector;
 using std::string;
-
 
 
 NormalRepair::NormalRepair(vector<Clobscode::Point3D> &puntos, vector<Face> &fv){
@@ -96,15 +62,6 @@ NormalRepair::NormalRepair(vector<Clobscode::Point3D> &puntos, vector<Face> &fv)
         faceChecked.push_back(0);
     }
 
-    // prueba seccionamiento en triangulos
-    // ancla en index 0
-    /* Pseudo
-        crear nueva lista caras
-        ancla = 0
-        for cara in lista_caras_originales:
-          for triangulo_index = 0; triangulo_index < nodos en cara.size()-2:
-            nueva_lista_caras.append([cara[ancla],cara[ancla+1+triangulo_index], cara[triangulo_index+2]])
-    */
     vector <vector <unsigned int>> caras_seccionadas;
     vector <unsigned int> caras_ref;
     unsigned int ancla = 0;
@@ -121,24 +78,6 @@ NormalRepair::NormalRepair(vector<Clobscode::Point3D> &puntos, vector<Face> &fv)
             tmp.clear();
         }
     }
-
-    
-    std::cout << "Caras seccionadas:\n";
-    for(unsigned int cidx=0; cidx < caras_seccionadas.size(); cidx++){
-        //solo para debug, borrar posteriormente 
-        cout << cidx <<": ";
-        print(caras_seccionadas[cidx],1);
-        
-        // std::cout << caras_ref[cidx] << "\n";
-        // Point3D tmp = puntos[caras_seccionadas[cidx][0]] ^ puntos[caras_seccionadas[cidx][2]];
-        // std::cout << "-> normal: " << tmp << "\n";
-    }
-    //---------------------------------------
-
-    //calcular nomales por triangulo
-    // std::cout << caras_seccionadas.size() << "\n";
-
-   
 
     
     //initialize and set min/max points of bbox
@@ -178,43 +117,33 @@ NormalRepair::NormalRepair(vector<Clobscode::Point3D> &puntos, vector<Face> &fv)
             
     }
     
-    //TODO: calcular la normal de la cara
     TriMesh tMesh(puntos, caras_seccionadas);
     
-    std::cout << "Puntos TriMesh:" << tMesh.getPoints().size() << "\n";
-    std::cout << "Caras TriMesh:" << tMesh.getFaces().size() << "\n";
+    // std::cout << "Puntos TriMesh:" << tMesh.getPoints().size() << "\n";
+    // std::cout << "Caras TriMesh:" << tMesh.getFaces().size() << "\n";
 
     vector <unsigned int> output_isinMesh = tMesh.pointIsInMeshIdx(out_bbox);
-    if (output_isinMesh.size() == 3){
-        std::cout << "InMesh? " << output_isinMesh[0] << "\nFaceIndex: " << caras_ref[output_isinMesh[1]] << "\nNeedRepair? " << output_isinMesh[2] << "\n";
-    }
+    // if (output_isinMesh.size() == 3){
+    //     std::cout << "InMesh? " << output_isinMesh[0] << "\nFaceIndex: " << caras_ref[output_isinMesh[1]] << "\nNeedRepair? " << output_isinMesh[2] << "\n";
+    // }
 
 
     unsigned int initial_face_index = caras_ref[output_isinMesh[1]];//closestTriangle;
-    // cout << bIsIn << "\tfdsafadsf\n";
-    // cout << closestDist << "\tfdsafadsf\n";
+
     
-    if (output_isinMesh[2] == true){
+    if (output_isinMesh[2] == 1){
         cout << "Reparacion de la primera cara con indice " << initial_face_index << "\n";
-        // for (int i=0; i < fv[initial_face_index].getPoints().size(); i++){
-        //     cout << fv[initial_face_index].getPoints()[i] << "\t";
-        // }
-        // cout << "\n";
+        for (int i=0; i < fv[initial_face_index].getPoints().size(); i++){
+            cout << fv[initial_face_index].getPoints()[i] << "\t";
+        }
+        cout << "\n";
         repair_face(fv[initial_face_index].getPoints());
+        for (int i=0; i < fv[initial_face_index].getPoints().size(); i++){
+            cout << fv[initial_face_index].getPoints()[i] << "\t";
+        }
+        cout << "\n";
     }
     faceChecked.at(initial_face_index) = 1;
-
-    // CODIGO VIEJO, CREO QUE NO SE VA A UTILIZAR -----------------------------
-    
-    // for (int pointIndex=0; pointIndex < fv[initial_face_index].getPoints().size(); pointIndex++){
-    //     if (pointIndex+1 == fv[initial_face_index].getPoints().size()){
-    //         RecursiveRepair(fv[initial_face_index].getPoints()[pointIndex], fv[initial_face_index].getPoints()[0], fv, faceChecked, facesContainsPoint);
-    //     }
-    //     else {
-    //         RecursiveRepair(fv[initial_face_index].getPoints()[pointIndex], fv[initial_face_index].getPoints()[pointIndex+1], fv, faceChecked, facesContainsPoint);
-    //     }
-    // }
-    // ------------------------------------------------------------------------
 
     // arma arreglo de puntos segun caras
     for (int i=0; i< points.size(); i++){
@@ -233,19 +162,21 @@ NormalRepair::NormalRepair(vector<Clobscode::Point3D> &puntos, vector<Face> &fv)
 
     //Toda la logica de la correccion de normales, al final el arreglo VUI tiene las caras con normales arregladas
     int idxCheck;
+    // por cada cara en el arreglo, comenzando desde la cara inicial
     for (int i=0; i<fv.size(); i++){
         if (initial_face_index + i >= fv.size()){
-            idxCheck = i;
+            idxCheck = (initial_face_index +i)%fv.size();
         }
         else {
             idxCheck = initial_face_index + i;
         }
-        // cout << "\n\n" << idxCheck << "\n\n" << initial_face_index << "\n\n";
+        
+
         for (int j=0; j < fv[idxCheck].getPoints().size(); j++){
             unsigned int p1,p2;
             if (allchecked(faceChecked)==true){
-                // print(fv);
                 i = fv.size();
+                break;
             }
 
             if (j == fv[idxCheck].getPoints().size()-1){
@@ -257,15 +188,21 @@ NormalRepair::NormalRepair(vector<Clobscode::Point3D> &puntos, vector<Face> &fv)
                 p2 = fv[idxCheck].getPoints()[j+1];
             }
             // cout << "(" << p1 << "," << p2 << ")@" << idxCheck << "[";
-            // cout << prueba_reparacion_rec(p1,p2, idxCheck,fv,faceChecked) << "]";
-            // print(facesChecked);
+            prueba_reparacion_rec(p1,p2, idxCheck,fv,faceChecked);
+            // cout << prueba_reparacion_rec(p1,p2, idxCheck,fv,faceChecked) << "]\n";
+            print(faceChecked); cout << "\n";
 
         }
 
     }
     this -> faces = fv;
 
-    
+    for (unsigned int fvidx=0; fvidx<this->faces.size(); fvidx++){
+        for(unsigned int FFF=0; FFF<this->faces[fvidx].getPoints().size(); FFF++){
+            cout << faces[fvidx].getPoints()[FFF] << " ";
+        }
+        cout << "\n";
+    }
 
 
 }
@@ -394,62 +331,7 @@ void NormalRepair::RepairFace(Face faceToBeRepaired){
     }
 }
 
-//if the 2-Points are in the same order in the face to be checked, need repair.
-// bool isRepairNeeded(Face faceToBeChecked, unsigned int pointA, unsigned int pointB){
-//     for (int i=0; i<faceToBeChecked.getPoints().size();i++){
-//         if (faceToBeChecked.getPoints()[i] == pointA){
-//             if ((i+1) == faceToBeChecked.getPoints().size() && faceToBeChecked.getPoints()[0] == pointB){
-//                 return true;
-//             }
-//             else {
-//                 if (faceToBeChecked.getPoints()[i+1] == pointB){
-//                     return true;
-//                 }
-//             }
-//         }
-//     }
-//     return false;
-// }
-
-// int faceContainsPoints(vector<vector<unsigned int>> facesByPoints, unsigned int pointA, unsigned int pointB){
-//     for (int i=0; i<facesByPoints.size(); i++){
-//         unsigned int contains = 0;
-//         for (int j=0; j<facesByPoints[i].size(); j++){
-//             if (pointA == facesByPoints[i][j]){
-//                 contains++;
-//             }
-//             else if (pointB == facesByPoints[i][j]){
-//                 contains++;
-//             }
-//         }
-//         if (contains == 2){
-//             return i;
-//         }
-//     }
-//     return -1; //no face with the points given
-// }
-
-// int RecursiveRepair(unsigned int pointA, unsigned int pointB, vector<Face> faceV, vector<unsigned int> faceChecked, vector<vector<unsigned int>> facesByPoints){
-//     //check if are unchecked faces
-//     bool all_checked = true;
-//     for(int i=0; i<faceChecked.size();i++){
-//         if (faceChecked[i] == 0){
-//             all_checked = false;
-//             break;
-//         }
-//     }
-//     if (all_checked == true) return 1;
-
-//     else{
-//         int auxIndex = faceContainsPoints(facesByPoints, pointA, pointB);
-//         if ( auxIndex != -1 && faceChecked[auxIndex] == 0 && isRepairNeeded(faceV[auxIndex],pointA, pointB)==true){
-//             RepairFace(faceV[auxIndex]);
-//             faceChecked.at(auxIndex) = 1;
-//         }
-//     }
-// }
 
 vector <Face>  NormalRepair::getFaces(){
     return this->faces;
 }
-// };

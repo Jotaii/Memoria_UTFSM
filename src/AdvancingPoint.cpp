@@ -77,15 +77,14 @@ using std::string;
 
 
 AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist){
-    // POR VERIFICAR ESTO
     vector <Face> FVector;
     for (int i=0;i<VUI.size(); i++){
         Face Ftemp(VUI[i]);
         FVector.push_back(Ftemp);
     }
 
-    std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
-    std::cout << "Numero de caras: " << FVector.size() << "\n";
+    // std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
+    // std::cout << "Numero de caras: " << FVector.size() << "\n";
 
     vector <unsigned int> nodesInSurface;
     for (int i=0; i< Puntos.size();i++){
@@ -102,9 +101,10 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
     
     NormalRepair NR = NormalRepair(Puntos, FVector);
     
-    // print(NR.getFaces());
+
     vector <Face> NRF = NR.getFaces();
-    
+
+
     vector <NodeProjection> NodeProjectionVector;
     NodeProjectionVector.reserve(Puntos.size());
     int deb = 0;
@@ -113,30 +113,28 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
     
     // Funcion que inicializa un objeto del tipo NodeProjection
     for (unsigned int i=0; i<Puntos.size(); i++){
-        // std::cout << "Control\t" << Puntos.size() << "\t" << nodesInSurface[i] << " \n";
-        // std::cout << "Control\t" << i << "\n";
         if (deb==0){
             
-            // NodeProjection(unsigned int Node_index, Point3D Node, vector<Face> &fv);
+            
             if (nodesInSurface[i] == 1){
                 NodeProjection NP(i, Puntos[i], NRF);
                 
                 if (NP.getFacesInvolved().size() > 0){
                     
-                    // funcion que calcula la normal acumulada de las caras que involucran al nodo NP
+                    
                     NP.CalcPreNormal(Puntos, 0);
 
-                    // Funcion que normaliza el valor en la normal acumulada de las caras que involucran al nodo NP
+                    
                     NP.Normalize();
-                    //TODO: REVISAR por que algunas normales dan -nan, deberian solo dar valores numericos!!!!!!!!!!!!
+                    
                     NodeProjectionVector.push_back(NP);
 
                     if(isnan(NP.getNormal().X()) || isnan(NP.getNormal().Y()) || isnan(NP.getNormal().Z())){
-                        // cout << "Control entrada if\n";
+                        
                         NP.CalcPreNormal(Puntos,1);
                         
                     }
-                    // NP.print();
+                    
                     
                 }
             }
@@ -145,14 +143,14 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
         }
         else{
             std::cout << "index punto :" << i << "\n";
-            // NodeProjection(unsigned int Node_index, Point3D Node, vector<Face> &fv);
+            
             std::cout << "Inicializacion ...";
             NodeProjection NP(i, Puntos[i], NRF);
             std::cout << "OK\n";
             if (NP.getFacesInvolved().size() > 0){
                 // funcion que calcula la normal acumulada de las caras que involucran al nodo NP
                 std::cout << "Calculo de Prenormales...";
-                NP.CalcPreNormal(Puntos);
+                NP.CalcPreNormal(Puntos, 1U);
                 std::cout << "OK\n";
                 // Funcion que normaliza el valor en la normal acumulada de las caras que involucran al nodo NP
                 std::cout << "Normalizando Prenormal...";
@@ -179,15 +177,6 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
     this -> normals = NodeProjectionVector;
     this -> arr_points = Puntos;
     this -> arr_faces = VUI;
-    
-    // std::cout << Puntos.size() << "\t" << NPR_arr.size() << "\n";
-
-
-    //Falta:
-    //      1. agregar los puntos new_points al arreglo de puntos -- LISTO
-    //      2. agregar los puntos (por indice) a la cara correspondiente del VUI
-    //      3. crear la estructura para saber si un punto fue previamente expandido, para no expandirlo de nuevo.
-
 
     for (unsigned int face_idx=0; face_idx < this->arr_faces.size(); face_idx++){
         unsigned int n_nodes = this->arr_faces[face_idx].size();
@@ -200,21 +189,6 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
             }
         }
     }
-
-    // for (unsigned int i=0; i< this->arr_faces.size(); i++){
-    //     for (unsigned int j=0; j< this->arr_faces[i].size(); j++){
-    //         std::cout << arr_faces[i][j] << "\t";
-    //     }
-    //     std::cout << "\n";
-    // }
-
-    // for (unsigned int i=0; i< this->arr_faces.size(); i++){
-    //     for (unsigned int j=0; j< this->arr_faces[i].size(); j++){
-    //         std::cout << arr_faces[i][j] << "\t";
-    //     }
-    //     std::cout << "\n";
-    // }
-    // std::cout << "\n";
 
 }
 

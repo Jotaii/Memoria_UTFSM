@@ -327,42 +327,6 @@ int main(int argc,char** argv){
 	// Clobscode::Mesher mesher;
     Clobscode::FEMesh output;
 
-
-    // // POR VERIFICAR ESTO
-    // vector <Face> FVector;
-    // for (int i=0;i<VUI.size(); i++){
-    //     Face Ftemp(VUI[i]);
-    //     FVector.push_back(Ftemp);
-    // }
-
-    // std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
-    // std::cout << "Numero de caras: " << FVector.size() << "\n";
-    
-    // // if (getfem) {
-    // //     // Services::WriteMeshGetfem(out_name,output);
-    // //     std::cout << "Esto imprime un output en gmf\n"; 
-    // // }
-
-    // //inicializacion vector de control de nodos
-    // vector <unsigned int> nodesInSurface;
-    // for (int i=0; i< Puntos.size();i++){
-    //     nodesInSurface.push_back(0);
-    // }
-    
-
-    
-    // for (int fidx=0; fidx< FVector.size(); fidx++){        
-    //     for (int nidx=0; nidx < nodesInSurface.size(); nidx++){
-    //         if(FVector[fidx].hasPoint(nidx) && nodesInSurface[nidx]==0){
-    //             nodesInSurface.at(nidx) = 1;
-    //         }
-    //     }
-    // }
-    
-    // for (int i=0; i< nodesInSurface.size();i++){
-    //     std::cout << nodesInSurface[i] << "-";
-    // }
-    // std::cout << "\n";
     
     if (vtkformat || !oneout) {
         std::cout << "Esto imprime un output en vtk\n";
@@ -370,19 +334,28 @@ int main(int argc,char** argv){
         AdvancingPoint AP(Puntos, VUI); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
         cout << "oldpoints\t\tnormals\n";
         for (int i=0; i<AP.getPoints().size(); i++){
-            cout << AP.getPoints()[i] << "\t" << AP.getNormals()[i].getNormal() << "\n";
+            cout << i << "-> " << AP.getPoints()[i] << "\t" << AP.getNormals()[i].getNormal() << "\n";
         }
         //agregar nuevos puntos y elementos a los arreglos
         cout << "newpoints\n";
         for (int i=0; i<AP.getNewPoints().size(); i++){
             Puntos.push_back(AP.getNewPoints()[i]);
-            cout << AP.getNewPoints()[i] << "\n";
+            cout << AP.getPoints().size()+i << "-> " << AP.getNewPoints()[i] << "\n";
         }
         vector < vector<unsigned int>> T1 = AP.getFaces();
         for (int i=0; i<AP.getFaces().size(); i++){ //evaluar cambio de nombre de getFaces a getElems
             VUI.push_back(AP.getFaces()[i]);
         }
         
+        cout << "\n\n\n\n";
+        for(unsigned int debug=0; debug<T1.size(); debug++){
+            std::cout << debug <<"-> ";
+            for(unsigned int elem=0; elem<T1[debug].size(); elem++){
+                std::cout << T1[debug][elem] << " ";
+            }
+            std::cout << "\n";
+        }
+
         //pruebas de output generado
         output.setElements(T1);
         output.setPoints(Puntos);

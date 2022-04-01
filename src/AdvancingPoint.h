@@ -42,7 +42,7 @@ class AdvancingPoint{
 
     public:
         //probablemente a esta funcion haya que agregarle los parametros de whitelist de caras, distancia y cantidad de iteraciones.
-        AdvancingPoint(vector <Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist=1);
+        AdvancingPoint(vector <Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist=1.73205161514);
         
         vector <vector <unsigned int>> getFaces();
         vector <Point3D> getPoints();

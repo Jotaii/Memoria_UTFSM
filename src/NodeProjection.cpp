@@ -97,15 +97,7 @@ NodeProjection::NodeProjection(unsigned int Node_index, Point3D Node, vector<Fac
         }
         
     }
-    // cout << "Caras que poseen el nodo " << Node_index << ": \n";
-    // for (int i=0; i < this->FacesInvolved.size(); i++){
-    //     cout << "Face No. " << i << ": {\t";
-    //     for(unsigned int j=0; j < this->FacesInvolved[i].size(); j++){
-    //         cout << this->FacesInvolved[i][j] << "\t";
-    //     }
-    //     cout << "}\n";
-    // }
-    // cout << "\n";
+
     
 }
 
@@ -145,14 +137,9 @@ unsigned int NodeProjection::PreviousNode(vector <unsigned int> FaceNodes){
     for (int i = FaceNodes.size()-1 ; i >= 0; i--){
         if(FaceNodes[i] == this->Node_index){
             if (i == 0){
-                // cout << "Face";
-                // print(FaceNodes);
-                // cout <<": return node index previous on zero: "<< FaceNodes.size()-1 << "\n";
                 return (FaceNodes[FaceNodes.size()-1]); //revisar si es FaceNodes.size() -1
             }
-            // cout << "Face";
-            // print(FaceNodes);
-            // cout <<": return node index previous: "<< i-1 << "\n";
+
             return (FaceNodes[i-1]);
         }
     }
@@ -176,7 +163,7 @@ void NodeProjection::CalcPreNormal(vector <Point3D> Puntos, unsigned int debug){
         if (debug != 0){
             cout << "(" << Puntos[NextNode(this->FacesInvolved[i])] << ")-(" << this->NodeSrc << ")" << " X " << "(" << Puntos[PreviousNode(this->FacesInvolved[i])] << ")-(" << this->NodeSrc << ") = (" << pointTemp << ") |"; 
         }
-        pointTemp = pointTemp/pointTemp.Norm();
+        pointTemp = pointTemp.normalize();
         if (debug != 0){
             cout << " Normalizado: (" << pointTemp << ")\n"; 
         }
