@@ -76,7 +76,7 @@ using std::string;
 
 
 
-AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist){
+AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist, unsigned int num_layers){
     vector <Face> FVector;
     for (int i=0;i<VUI.size(); i++){
         Face Ftemp(VUI[i]);
@@ -164,32 +164,140 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
         
     }
 
-    for (unsigned int pointIdx = 0; pointIdx < Puntos.size(); pointIdx++){
-        if (nodesInSurface[pointIdx] == 1){
-            Point3D newPoint(Puntos[pointIdx].X()+dist*NodeProjectionVector[pointIdx].getNormal().X(),
-                         Puntos[pointIdx].Y()+dist*NodeProjectionVector[pointIdx].getNormal().Y(),
-                         Puntos[pointIdx].Z()+dist*NodeProjectionVector[pointIdx].getNormal().Z());
-            this -> new_points.push_back(newPoint); //posibilidad de tener que borrar este arreglo para dejarle la carga a la estructura NewPointRef
-            NewPointRef NewNode(Puntos.size()+pointIdx, pointIdx, newPoint);
-            NPR_arr.push_back(NewNode);
+    //generacion de puntos nuevos
+    for (unsigned int layer=1; layer <= num_layers; layer++){
+        for (unsigned int pointIdx = 0; pointIdx < Puntos.size(); pointIdx++){
+            if (nodesInSurface[pointIdx] == 1){
+                Point3D newPoint(Puntos[pointIdx].X()+layer*dist*NodeProjectionVector[pointIdx].getNormal().X(),   //si no funciona sacar el layer*
+                            Puntos[pointIdx].Y()+layer*dist*NodeProjectionVector[pointIdx].getNormal().Y(),        //si no funciona sacar el layer*
+                            Puntos[pointIdx].Z()+layer*dist*NodeProjectionVector[pointIdx].getNormal().Z());       //si no funciona sacar el layer*
+                this -> new_points.push_back(newPoint); //posibilidad de tener que borrar este arreglo para dejarle la carga a la estructura NewPointRef
+                if (layer == 1){
+                    NewPointRef NewNode(Puntos.size()*layer+pointIdx, pointIdx, newPoint);
+                    NPR_arr.push_back(NewNode);
+                }
+                else {
+                    NewPointRef NewNode(Puntos.size()*layer+pointIdx, Puntos.size()*(layer-1)+pointIdx, newPoint);
+                    NPR_arr.push_back(NewNode);
+                }
+
+                
+            }
         }
     }
+    // cout << NPR_arr.size() << "\n";
     this -> normals = NodeProjectionVector;
     this -> arr_points = Puntos;
     this -> arr_faces = VUI;
 
-    for (unsigned int face_idx=0; face_idx < this->arr_faces.size(); face_idx++){
-        unsigned int n_nodes = this->arr_faces[face_idx].size();
-        for(unsigned int node_face_rel=0; node_face_rel < n_nodes; node_face_rel++){
-            //esto es SUPER ineficiente, corregir para disminuir el computo
-            for(unsigned int i=0; i< NPR_arr.size();i++){
-                if (NPR_arr[i].getFIndex() == arr_faces[face_idx][node_face_rel]){
-                    this->arr_faces[face_idx].push_back(NPR_arr[i].getIndex());
-                }
-            }
+    cout << "--OLD--\n";
+    for(int i=0; i< this->arr_faces.size(); i++){
+        cout << "[";
+        for(int j=0; j < this->arr_faces[i].size(); j++){
+            cout << this->arr_faces[i][j] << " ";
         }
+        cout << "]\n";
     }
+    // ------------------------ EXPERIMENTAL ----------------------------------
+    //si layer pendientes > 0, crear nuevo elemento en arr_faces 
+    //con los puntos iniciales correspondiente a la cara anterior
+    
+    // for (unsigned int checkedLayers=1; checkedLayers<=num_layers; checkedLayers++){
+    //     vector <unsigned int> newElemsByLayer;
+    //     cout << "newlayer \n";
+    //     for (unsigned int i=NPR_arr.size()*(checkedLayers-1)/num_layers;
+    //             i < NPR_arr.size()*checkedLayers/num_layers;i++){
+    //         for (unsigned int k=0; k<NPR_arr.size(); k++){
+    //             if(NPR_arr[k].getIndex()== i+Puntos.size()){
+    //                 cout << i+Puntos.size() << "->" << NPR_arr[k].getFIndex() << "\n";
+    //             }
+    //         }
+            
+    //     }
+    // }
+    //-----------------------------------------------------------------------------------
 
+
+    //TODO: TERMINAR LA PROYECCION PARA MAS DE UNA CAPA
+    // layer_check = 1
+    // Si layer_num > layer_check:
+    // despues de agregar los nodos a una nueva cara
+
+    //primera proyeccion
+    unsigned int layer_check = 1;
+    unsigned int initial_faces_offset = this->arr_faces.size();
+    vector <unsigned int> newfacePerLayer;
+    for (;layer_check<=num_layers;layer_check++){
+        // cout << "[DEBUG] Layer: " << layer_check << "\n";
+        // cout << "[DEBUG] ArrSize: " << this->arr_faces.size() << "\n";
+        // cout << "[DEBUG] init next for: " << initial_faces_offset*(layer_check-1) << "\n";
+        for (unsigned int face_idx=initial_faces_offset*(layer_check-1); face_idx < initial_faces_offset*layer_check; face_idx++){
+            // cout << "(" << arr_faces.size() << ")\n";
+            // cout << "Revisando la cara " << face_idx << " \n";
+            unsigned int n_nodes = this->arr_faces[face_idx].size();
+            cout << "Para cara de indice " << face_idx << " Se revisan los " << n_nodes << " nodos de la misma\n";
+            newfacePerLayer = {};
+            for(unsigned int node_face_rel=0; node_face_rel < n_nodes; node_face_rel++){
+                //esto es SUPER ineficiente, corregir para disminuir el computo
+                for(unsigned int i=0; i< NPR_arr.size();i++){
+                    if (NPR_arr[i].getFIndex() == arr_faces[face_idx][node_face_rel]){
+                        cout << "    Adding: " << NPR_arr[i].getIndex() << " to face " << face_idx << "\n";
+                        this->arr_faces[face_idx].push_back(NPR_arr[i].getIndex());
+                        // cout << "    Numlayers: " << num_layers << " | LayerCheck: " << layer_check << "\n";
+                        //revisar si este condicional va aca o va en otro lado
+                        if (layer_check < num_layers){
+                            // cout << "    ** NewFaceIndex: " << NPR_arr[i].getIndex()+(initial_faces_offset*layer_check-1) << "\n";
+                            newfacePerLayer.push_back(NPR_arr[i].getIndex());
+                            
+                            // layer_check++;
+                        }
+
+                    }     
+                    
+                }
+                
+                // layer_check = 1;
+                // layer_check ++;
+                
+            }
+
+            if (newfacePerLayer.size()>0 && layer_check < num_layers){
+                // cout<<"[DEBUG] NewFaceSize: "<<newfacePerLayer.size()<<"\n";
+                this->arr_faces.push_back(newfacePerLayer);
+            }
+
+            // if (newfacePerLayer.size() > 0){
+            //     cout << "*Agregando ("<< newfacePerLayer.size() <<")-> [";
+            //     for(int i=0; i< newfacePerLayer.size(); i++){
+            //         cout << newfacePerLayer[i] << " ";
+            //     }
+            //     cout << "]\n";
+            // }
+            
+            
+            // if (newfacePerLayer.size()>0){
+            //     // cout << "newfacePerLayer -> " << newfacePerLayer.size() << "\n";
+            //     this->arr_faces.push_back(newfacePerLayer);
+            // }
+            
+            
+        }
+        
+    }
+    
+    
+
+    cout << "--NEW--\n";
+    for(int i=0; i< this->arr_faces.size(); i++){
+        cout << "[";
+        for(int j=0; j < this->arr_faces[i].size(); j++){
+            cout << this->arr_faces[i][j] << " ";
+        }
+        cout << "]\n";
+    }
+    
+    
+    
 }
 
 vector <vector<unsigned int>> AdvancingPoint::getFaces(){ return this->arr_faces;}

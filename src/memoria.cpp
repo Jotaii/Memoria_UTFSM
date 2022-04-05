@@ -331,16 +331,16 @@ int main(int argc,char** argv){
     if (vtkformat || !oneout) {
         std::cout << "Esto imprime un output en vtk\n";
         unsigned int dist = 10;
-        AdvancingPoint AP(Puntos, VUI); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
-        cout << "oldpoints\t\tnormals\n";
+        AdvancingPoint AP(Puntos, VUI, distance_between_layers, layers_qty); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
+        // cout << "oldpoints\t\tnormals\n";
         for (int i=0; i<AP.getPoints().size(); i++){
-            cout << i << "-> " << AP.getPoints()[i] << "\t" << AP.getNormals()[i].getNormal() << "\n";
+            // cout << i << "-> " << AP.getPoints()[i] << "\t" << AP.getNormals()[i].getNormal() << "\n";
         }
         //agregar nuevos puntos y elementos a los arreglos
-        cout << "newpoints\n";
+        // cout << "newpoints\n";
         for (int i=0; i<AP.getNewPoints().size(); i++){
             Puntos.push_back(AP.getNewPoints()[i]);
-            cout << AP.getPoints().size()+i << "-> " << AP.getNewPoints()[i] << "\n";
+            // cout << AP.getPoints().size()+i << "-> " << AP.getNewPoints()[i] << "\n";
         }
         vector < vector<unsigned int>> T1 = AP.getFaces();
         for (int i=0; i<AP.getFaces().size(); i++){ //evaluar cambio de nombre de getFaces a getElems
@@ -348,6 +348,7 @@ int main(int argc,char** argv){
         }
         
         cout << "\n\n\n\n";
+        cout << "T1 Size: " << T1.size() << "\n";
         for(unsigned int debug=0; debug<T1.size(); debug++){
             std::cout << debug <<"-> ";
             for(unsigned int elem=0; elem<T1[debug].size(); elem++){
