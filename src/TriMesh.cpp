@@ -538,9 +538,9 @@ namespace Clobscode
 		// std:: cout << mTriangles[closestTriangle-1].getPoints()[0] << " " << mTriangles[closestTriangle-1].getPoints()[1] << " " << mTriangles[closestTriangle-1].getPoints()[2] << "\n";
 		// std::cout << "CT: " << closestTriangle-1 << "\n";
 		
-		std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[0]]) << "\n";
-		std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[1]]) << "\n";
-		std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[2]]) << "\n";
+		// std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[0]]) << "\n";
+		// std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[1]]) << "\n";
+		// std::cout << (this->getPoints()[mTriangles[closestTriangle].getPoints()[2]]) << "\n";
 		
 
 		output.push_back(bIsIn);

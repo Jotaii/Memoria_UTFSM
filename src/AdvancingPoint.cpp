@@ -82,7 +82,7 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
         Face Ftemp(VUI[i]);
         FVector.push_back(Ftemp);
     }
-
+    
     // std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
     // std::cout << "Numero de caras: " << FVector.size() << "\n";
 
@@ -90,7 +90,7 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
     for (int i=0; i< Puntos.size();i++){
         nodesInSurface.push_back(0);
     }
-
+    
     for (unsigned int fidx=0; fidx< FVector.size(); fidx++){        
         for (unsigned int nidx=0; nidx < nodesInSurface.size(); nidx++){
             if(FVector[fidx].hasPoint(nidx) && nodesInSurface[nidx]==0){
@@ -190,14 +190,14 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
     this -> arr_points = Puntos;
     this -> arr_faces = VUI;
 
-    cout << "--OLD--\n";
-    for(int i=0; i< this->arr_faces.size(); i++){
-        cout << "[";
-        for(int j=0; j < this->arr_faces[i].size(); j++){
-            cout << this->arr_faces[i][j] << " ";
-        }
-        cout << "]\n";
-    }
+    // cout << "--OLD--\n";
+    // for(int i=0; i< this->arr_faces.size(); i++){
+    //     cout << "[";
+    //     for(int j=0; j < this->arr_faces[i].size(); j++){
+    //         cout << this->arr_faces[i][j] << " ";
+    //     }
+    //     cout << "]\n";
+    // }
     // ------------------------ EXPERIMENTAL ----------------------------------
     //si layer pendientes > 0, crear nuevo elemento en arr_faces 
     //con los puntos iniciales correspondiente a la cara anterior
@@ -235,13 +235,13 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
             // cout << "(" << arr_faces.size() << ")\n";
             // cout << "Revisando la cara " << face_idx << " \n";
             unsigned int n_nodes = this->arr_faces[face_idx].size();
-            cout << "Para cara de indice " << face_idx << " Se revisan los " << n_nodes << " nodos de la misma\n";
+            // cout << "Para cara de indice " << face_idx << " Se revisan los " << n_nodes << " nodos de la misma\n";
             newfacePerLayer = {};
             for(unsigned int node_face_rel=0; node_face_rel < n_nodes; node_face_rel++){
                 //esto es SUPER ineficiente, corregir para disminuir el computo
                 for(unsigned int i=0; i< NPR_arr.size();i++){
                     if (NPR_arr[i].getFIndex() == arr_faces[face_idx][node_face_rel]){
-                        cout << "    Adding: " << NPR_arr[i].getIndex() << " to face " << face_idx << "\n";
+                        // cout << "    Adding: " << NPR_arr[i].getIndex() << " to face " << face_idx << "\n";
                         this->arr_faces[face_idx].push_back(NPR_arr[i].getIndex());
                         // cout << "    Numlayers: " << num_layers << " | LayerCheck: " << layer_check << "\n";
                         //revisar si este condicional va aca o va en otro lado
@@ -287,14 +287,14 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
     
     
 
-    cout << "--NEW--\n";
-    for(int i=0; i< this->arr_faces.size(); i++){
-        cout << "[";
-        for(int j=0; j < this->arr_faces[i].size(); j++){
-            cout << this->arr_faces[i][j] << " ";
-        }
-        cout << "]\n";
-    }
+    // cout << "--NEW--\n";
+    // for(int i=0; i< this->arr_faces.size(); i++){
+    //     cout << "[";
+    //     for(int j=0; j < this->arr_faces[i].size(); j++){
+    //         cout << this->arr_faces[i][j] << " ";
+    //     }
+    //     cout << "]\n";
+    // }
     
     
     

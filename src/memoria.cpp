@@ -14,12 +14,16 @@
 #include <cctype>
 #include <time.h>
 #include <chrono>
+#include <fstream>
+#include <iostream>
+#include <cstdlib>
 
 using std::atoi;
 using std::cout;
 using std::cerr;
 using std::vector;
 using std::string;
+using std::ifstream;
 using Clobscode::RefinementRegion;
 using Clobscode::RefinementCubeRegion;
 using Clobscode::RefinementSurfaceRegion;
@@ -178,7 +182,7 @@ int main(int argc,char** argv){
     
     //Default values for options
     int distance_between_layers=1, layers_qty=1;
-    string faces_whitelist = "";
+    string faces_whitelist;
     bool distance_given=false, layers_given=false, faces_whitelist_given=false;
 
     //for reading an octant mesh as starting point.
@@ -280,13 +284,22 @@ int main(int argc,char** argv){
 
                 i++;
                 break;
+            
 
             case 'f': //para archivos .oct
                 faces_whitelist = argv[i+1];
                 faces_whitelist_given = true;
-
+                //procesamiento de whitelist
+                //dudas: 
+                //  - Que pasa si un nodo N no posee vecinos para calcular su normal en la whitelist?
+                //  - Los nodos que van en la whitelist son los que se expanden pero se usan todos para el calculo de las normales?
+                //  - Al expandir los puntos no-parejos, como se distribuye la proyeccion?
+                //      ejemplo: si tengo cara cuadrada y expando solo 2 puntos de dicha cara, como quedaria definido el elemento nuevo?
+                
+                
                 i++;
                 break;
+
             default:
                 cerr << "Warning: unknown option " << argv[i] << " skipping\n";
                 break;
@@ -299,6 +312,36 @@ int main(int argc,char** argv){
         return 0;
     }
 
+    vector <unsigned int> Whitelist;
+    for (unsigned int i=0; i < Puntos.size(); i++){
+        Whitelist.push_back(0);
+    }
+
+    if (faces_whitelist_given){
+        //lectura de archivo intento 1
+        std::ifstream indata;
+        int num; // variable for input value
+        indata.open(faces_whitelist); // opens the file
+        if(!indata) { // file couldn't be opened
+            cerr << "Error: El archivo " << faces_whitelist << " no puede ser abierto o no existe" << endl;
+            exit(1);
+        }
+        indata >> num;
+        while ( !indata.eof() ) { // keep reading until end-of-file
+            if (num < Puntos.size()){
+                Whitelist.at(num) = 1;
+            }
+            // cout << "The next number is " << num << endl;
+            indata >> num; // sets EOF flag if no value found
+        }
+        indata.close();
+        cout << "Whitelist cargada correctamente.." << endl;
+        cout << "[";
+        for (unsigned int i=0; i < Whitelist.size(); i++){
+            cout << Whitelist[i] << " ";
+        }
+        cout << "]\n";
+    }
     // else {
     //     // for (int i=0; i<Puntos.size(); i++){
     //     //     std::cout << Puntos[i] << "\n";
@@ -331,11 +374,13 @@ int main(int argc,char** argv){
     if (vtkformat || !oneout) {
         std::cout << "Esto imprime un output en vtk\n";
         unsigned int dist = 10;
+        
         AdvancingPoint AP(Puntos, VUI, distance_between_layers, layers_qty); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
         // cout << "oldpoints\t\tnormals\n";
-        for (int i=0; i<AP.getPoints().size(); i++){
-            // cout << i << "-> " << AP.getPoints()[i] << "\t" << AP.getNormals()[i].getNormal() << "\n";
-        }
+        // for (int i=0; i<AP.getPoints().size(); i++){
+        //     // cout << i << "-> " << AP.getPoints()[i] << "\t" << AP.getNormals()[i].getNormal() << "\n";
+        // }
+        
         //agregar nuevos puntos y elementos a los arreglos
         // cout << "newpoints\n";
         for (int i=0; i<AP.getNewPoints().size(); i++){
@@ -347,7 +392,6 @@ int main(int argc,char** argv){
             VUI.push_back(AP.getFaces()[i]);
         }
         
-        cout << "\n\n\n\n";
         cout << "T1 Size: " << T1.size() << "\n";
         for(unsigned int debug=0; debug<T1.size(); debug++){
             std::cout << debug <<"-> ";
