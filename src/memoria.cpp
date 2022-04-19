@@ -53,57 +53,6 @@ void endMsg(){
     cout << "    -i save output mesh in MVM ASCII format (mvm)\n";
     cout << "    -m save output mesh in M3D ASCII format (m3d)\n";
 }
-// Funciones se pasaron al archivo NormalRepair.cpp
-// bool repair_needed(unsigned int p1, unsigned int p2, vector<unsigned int> Face){
-//     for (int pts=0; pts<Face.size(); pts++){
-//         if (pts == Face.size()-1){
-//             if (Face[pts] == p1 && Face[0] == p2)return true;
-//         }
-//         else{
-//             if (Face[pts] == p1 && Face[pts+1] == p2)return true;
-//         }
-//     }
-//     return false;
-// }
-
-// void repair_face(vector<unsigned int> &F){
-//     unsigned int temp;
-//     //creo que siempre se cambia el ultimo con el segundo, verificar!
-//     if (F.size() == 3){
-//         temp = F[2];
-//         F.at(2) = F[1];
-//         F.at(1) = temp;
-//     }
-//     else if (F.size() == 4){
-//         temp = F[3];
-//         F.at(3) = F[1];
-//         F.at(1) = temp;
-//     }
-// }
-
-// bool allchecked(vector<unsigned int> Checked){
-//     for (int i=0; i<Checked.size();i++){
-//         if (Checked[i] == 0){
-//             return false;
-//         }
-//     }
-//     return true;
-// }
-
-// int buscar_cara_comun(unsigned int p1, unsigned int p2, unsigned int faceIdx, vector<vector<unsigned int>>Faces){
-//     int contador = 0;
-//     for (int faceidx=0; faceidx < Faces.size(); faceidx++){
-//         int contador = 0;
-//         if (faceIdx != faceidx){
-//             for (int punto_en_cara_idx=0; punto_en_cara_idx < Faces[faceidx].size(); punto_en_cara_idx++){
-//                 if (Faces[faceidx][punto_en_cara_idx] == p1) contador++;
-//                 if (Faces[faceidx][punto_en_cara_idx] == p2) contador++;
-//             }
-//             if (contador == 2) return faceidx;
-//         }
-//     }
-//     return -1;
-// }
 
 void print(vector<Face> V){
     for (int i=0; i<V.size(); i++){
@@ -129,33 +78,6 @@ void print(vector <unsigned int>V){
     cout << "]\n";
 }
 
-// int prueba_reparacion_rec(unsigned int p1, unsigned int p2, unsigned int faceIdx, 
-//                         vector<vector< unsigned int>> &Faces, 
-//                         vector<unsigned int> &Checked){
-//     if (allchecked(Checked)==true){
-//         // cout << "allcheck true\n"; 
-//         return 1;
-//     }
-//     else{
-//         int aux = buscar_cara_comun(p1,p2,faceIdx,Faces);
-//         // cout << aux << " " << p1 << " " << p2 << " " << faceIdx << "\n";
-//         if(aux != -1){ //si es todo conexo siempre habran dos caras que posean los mismos puntos (presuncion fija para memoria)
-//             if (Checked[aux] == 1){
-//                 return 1;
-//             }
-//             else{
-//                 if (repair_needed(p1,p2,Faces[aux])==true){
-//                     repair_face(Faces[aux]);
-//                 }
-//                 Checked.at(aux) = 1;
-//                 // prueba_reparacion_rec(Faces[aux][0], Faces[aux][1], aux, Faces, Checked);
-//             }
-//         }
-//     }
-//     return -1;
-// }
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
 
 int main(int argc,char** argv){
     
@@ -295,7 +217,8 @@ int main(int argc,char** argv){
                 //  - Los nodos que van en la whitelist son los que se expanden pero se usan todos para el calculo de las normales?
                 //  - Al expandir los puntos no-parejos, como se distribuye la proyeccion?
                 //      ejemplo: si tengo cara cuadrada y expando solo 2 puntos de dicha cara, como quedaria definido el elemento nuevo?
-                
+                // la whitelist es por caras!
+
                 
                 i++;
                 break;
@@ -312,11 +235,13 @@ int main(int argc,char** argv){
         return 0;
     }
 
-    vector <unsigned int> Whitelist;
-    for (unsigned int i=0; i < Puntos.size(); i++){
-        Whitelist.push_back(0);
+    // Se inicializa el arreglo que indica si las caras deben ser o no expandidas (se llena con ceros)
+    vector <unsigned int> Whitelist_faces;
+    for (unsigned int i=0; i < VUI.size(); i++){
+        Whitelist_faces.push_back(0);
     }
 
+    vector < vector <unsigned int>> VUI2;
     if (faces_whitelist_given){
         //lectura de archivo intento 1
         std::ifstream indata;
@@ -328,8 +253,8 @@ int main(int argc,char** argv){
         }
         indata >> num;
         while ( !indata.eof() ) { // keep reading until end-of-file
-            if (num < Puntos.size()){
-                Whitelist.at(num) = 1;
+            if (num < VUI.size()){
+                Whitelist_faces.at(num) = 1;
             }
             // cout << "The next number is " << num << endl;
             indata >> num; // sets EOF flag if no value found
@@ -337,11 +262,34 @@ int main(int argc,char** argv){
         indata.close();
         cout << "Whitelist cargada correctamente.." << endl;
         cout << "[";
-        for (unsigned int i=0; i < Whitelist.size(); i++){
-            cout << Whitelist[i] << " ";
+        for (unsigned int i=0; i < Whitelist_faces.size(); i++){
+            cout << Whitelist_faces[i] << " ";
+        }
+        cout << "]\n";
+
+        
+        for (int i=0; i < VUI.size(); i++){
+            // filter whitelist v2
+            if (Whitelist_faces[i] == 1){
+                // VUI.erase(VUI.begin() + i);
+                VUI2.push_back(VUI[i]);
+            }
+            
+        }
+        cout << "[";
+        for (unsigned int i=0; i < VUI2.size(); i++){
+            cout << "[";
+            for (unsigned int j=0; j < VUI2[i].size(); j++){
+                cout << VUI2[i][j] << " ";
+            }
+            cout << "], ";
         }
         cout << "]\n";
     }
+
+    
+    
+
     // else {
     //     // for (int i=0; i<Puntos.size(); i++){
     //     //     std::cout << Puntos[i] << "\n";
@@ -375,30 +323,45 @@ int main(int argc,char** argv){
         std::cout << "Esto imprime un output en vtk\n";
         unsigned int dist = 10;
         
-        AdvancingPoint AP(Puntos, VUI, distance_between_layers, layers_qty); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
+        AdvancingPoint AP(Puntos, VUI2, distance_between_layers, layers_qty, Whitelist_faces); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
+        
+        //BORRAR ESTE FOR, solo para control debuger
+        for (int i=0; i<AP.getNormals().size(); i++){
+            cout << "normal : " << AP.getNormals()[i].getNormal() << " perteneciente al punto original: " << AP.getNormals()[i].getNodeIndex() << "\n";
+        }
+
+        
         // cout << "oldpoints\t\tnormals\n";
-        // for (int i=0; i<AP.getPoints().size(); i++){
-        //     // cout << i << "-> " << AP.getPoints()[i] << "\t" << AP.getNormals()[i].getNormal() << "\n";
+        // for (int i=0; i<AP.getNormals().size(); i++){
+        //     cout << AP.getNormals()[i].getNodeIndex() << "-> " << AP.getPoints()[AP.getNormals()[i].getNodeIndex()] << "\t\t" << AP.getNormals()[i].getNormal() << "\n";
         // }
         
         //agregar nuevos puntos y elementos a los arreglos
-        // cout << "newpoints\n";
+        // cout << "newpoints ["<< AP.getNewPoints().size() <<"]\n";
         for (int i=0; i<AP.getNewPoints().size(); i++){
             Puntos.push_back(AP.getNewPoints()[i]);
             // cout << AP.getPoints().size()+i << "-> " << AP.getNewPoints()[i] << "\n";
         }
+
         vector < vector<unsigned int>> T1 = AP.getFaces();
         for (int i=0; i<AP.getFaces().size(); i++){ //evaluar cambio de nombre de getFaces a getElems
             VUI.push_back(AP.getFaces()[i]);
         }
         
-        cout << "T1 Size: " << T1.size() << "\n";
-        for(unsigned int debug=0; debug<T1.size(); debug++){
-            std::cout << debug <<"-> ";
-            for(unsigned int elem=0; elem<T1[debug].size(); elem++){
-                std::cout << T1[debug][elem] << " ";
+        // cout << "T1 Size: " << T1.size() << "\n";
+        // for(unsigned int debug=0; debug<T1.size(); debug++){
+        //     std::cout << debug <<"-> ";
+        //     for(unsigned int elem=0; elem<T1[debug].size(); elem++){
+        //         std::cout << T1[debug][elem] << " ";
+        //     }
+        //     std::cout << "\n";
+        // }
+        
+        //add previous elements to mesh
+        for (int i=Whitelist_faces.size()-1; i >= 0;i--){
+            if (Whitelist_faces[i] == 0){
+                T1.insert(T1.begin(), VUI[i]);
             }
-            std::cout << "\n";
         }
 
         //pruebas de output generado

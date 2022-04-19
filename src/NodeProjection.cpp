@@ -77,7 +77,7 @@ using std::string;
 //         Point3D Normal;
 //         vector< vector<unsigned int> > FacesInvolved;
 
-NodeProjection::NodeProjection(unsigned int Node_index, Point3D Node, vector<Face> &fv){
+NodeProjection::NodeProjection(unsigned int Node_index, Point3D Node, vector<Face> &fv, vector <unsigned int> Whitelist_faces){
     // std::vector<vector<unsigned int >>::iterator it=fv.begin();
     // for (it; it != fv.end(); it++){
     //     std::cout << it << endl;
@@ -89,13 +89,14 @@ NodeProjection::NodeProjection(unsigned int Node_index, Point3D Node, vector<Fac
     // std::cout << "["<< this->NodeSrc << "]@"<< this->Node_index <<"\t";
     for(unsigned int i=0; i < fv.size(); i++){
         // std::cout << "Checking face " << i << " with points size array" << fv[i].getPoints().size() << "\n";
-        for(unsigned int j=0; j < fv[i].getPoints().size(); j++){
-            if(fv[i].getPoints()[j] == Node_index){
-                this->FacesInvolved.push_back(fv[i].getPoints());
-                break;
+        // if (Whitelist_faces.size()==0 || Whitelist_faces[i] == 1 ){
+            for(unsigned int j=0; j < fv[i].getPoints().size(); j++){
+                if(fv[i].getPoints()[j] == Node_index){ //checkear este if!!!
+                    this->FacesInvolved.push_back(fv[i].getPoints());
+                    break;
+                }
             }
-        }
-        
+        // }
     }
 
     
@@ -196,7 +197,16 @@ Point3D NodeProjection::getNormal(){
     return this->Normal;
 }
 
+void NodeProjection::setNormal(float X, float Y, float Z){
+    Point3D P(X,Y,Z);
+    this->Normal = P;
+}
+
 vector<vector<unsigned int >> NodeProjection::getFacesInvolved(){
     return this->FacesInvolved;
+}
+
+unsigned int NodeProjection::getNodeIndex(){
+    return this->Node_index;
 }
 // };

@@ -40,7 +40,7 @@ class NodeProjection{
         vector< vector<unsigned int> > FacesInvolved;
 
     public:
-        NodeProjection(unsigned int Node_index, Point3D Node, vector<Face> &fv);
+        NodeProjection(unsigned int Node_index, Point3D Node, vector<Face> &fv, vector <unsigned int> Whitelist_faces = {});
 
         void print();
 
@@ -57,9 +57,13 @@ class NodeProjection{
 
         Point3D getNormal();
 
+        void setNormal(float X, float Y, float Z);
+
         vector<vector<unsigned int>> getFacesInvolved();
 
         void print(vector <unsigned int>Fv);
+
+        unsigned int getNodeIndex();
 
 };
 #endif
