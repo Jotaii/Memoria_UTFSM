@@ -79,7 +79,7 @@ namespace Clobscode
         removeOnSurface();
         
         //Now that we have all the elements, we can save the octant mesh.
-        unsigned int nels = octants.size();
+        //unsigned int nels = octants.size();                                                   *Commented for warning*
         // Services::WriteOctreeMesh(name,oct_points,octants,octreeEdges,nels,gt);
         
         detectInsideNodes(input);
@@ -148,7 +148,7 @@ namespace Clobscode
         removeOnSurface();
         
         //Now that we have all the elements, we can save the octant mesh.
-        unsigned int nels = octants.size();
+        // unsigned int nels = octants.size();                                      *Commented for warning*
         // Services::WriteOctreeMesh(name,points,octants,octreeEdges,nels,gt);
 
         
@@ -252,7 +252,7 @@ namespace Clobscode
                               const unsigned short &minrl, const unsigned short &omaxrl){
         
         //to save m3d files per stage
-        Clobscode::Services io;
+        // Clobscode::Services io;                  *Commented for warning*
         
         //list of temp octants
         list<Octant> tmp_octants, new_octants;
@@ -370,7 +370,7 @@ namespace Clobscode
         //----------------------------------------------------------
         //----------------------------------------------------------
         
-        unsigned int oldnpts = points.size();
+        // unsigned int oldnpts = points.size();                *Commented for warning*
         
         //----------------------------------------------------------
         //refine each octant until the Refinement Level is reached
@@ -653,7 +653,7 @@ namespace Clobscode
 									const string &name){
 		
 		//to save m3d files per stage
-		Clobscode::Services io;
+		// Clobscode::Services io;                      *Commented for warning*
 
 		//list of temp octants
 		list<Octant> tmp_octants, new_octants;

@@ -224,8 +224,8 @@ namespace Clobscode
                 std::fscanf(file,"%i",&nfp);
                 
                 std::vector<unsigned int> fpts(nfp,0);
-                for(unsigned int j=0;j<nfp;j++){
-                    std::fscanf(file,"%i",&fpts[j]);
+                for(int j=0;j<nfp;j++){
+                    std::fscanf(file,"%u",&fpts[j]);
                 }
                 Faces.push_back(fpts);
                 //read any other data in the line
@@ -240,14 +240,16 @@ namespace Clobscode
         }
         
         //--------------------------------------------------------------------
-        static bool readVtk(string name, vector<Point3D>&points, vector<vector< unsigned int>> &faces){
+        static bool readVtk(string name, vector<Point3D>&points, vector<vector< unsigned int>> &faces, vector <unsigned int> &cell_types){
             
             char word [256];
-            unsigned int cant,type;
+            unsigned int celltype;
+            unsigned int cant; //type;
             double x,y,z;
             vector < Element *> elements;
             FILE *file = fopen(name.c_str(),"r");
             
+            cout << "CONTROL\n";
             while(true){
                 if(!fscanf(file,"%s",word)){
                     fclose(file);
@@ -283,7 +285,7 @@ namespace Clobscode
             
             points.push_back(p);
             
-            for(int i=1;i<cant;i++){
+            for(unsigned int i=1;i<cant;i++){
                 fscanf(file,"%s",word);
                 x=atof(word);
                 fscanf(file,"%s",word);
@@ -311,7 +313,7 @@ namespace Clobscode
             
             unsigned int idx;
             
-            for(int i=0;i<cant;i++){
+            for(unsigned int i=0;i<cant;i++){
                 
                 Element *element;
                 fscanf(file,"%s",word);
@@ -357,6 +359,27 @@ namespace Clobscode
                 
                 elements.push_back(element);
             }
+
+            //CELL_TYPES
+            
+            while(true){
+                if(!fscanf(file,"%s",word)){
+                    fclose(file);
+                    return false;
+                }
+                if(!strcmp(word,"CELL_TYPES\0"))
+                    break;
+            }
+
+            fscanf(file,"%u",&cant);
+            cell_types.reserve(cant);
+            cout << "***** celltype info ******\n"; 
+            for(unsigned int i=0;i<cant;i++){
+                fscanf(file,"%u",&celltype);
+                cout << celltype << "  ";
+                cell_types.push_back(celltype);
+            }
+            cout << "\n";
             
             fclose(file);
 
@@ -366,7 +389,7 @@ namespace Clobscode
                 //An EnhancedElement is an Element with optimizations for
                 //removing and visualizing.
                 elements[i]->computeBbox(points);
-                for(int j=0;j<elements[i]->numberOfFaces();j++){
+                for(unsigned int j=0;j<elements[i]->numberOfFaces();j++){
                     
                     vector<unsigned int> fpts = elements[i]->getFacePoints(j);
                     Face face(fpts);
@@ -376,10 +399,15 @@ namespace Clobscode
                     elements[i]->addFace(fid);
                 }
             }
-            //REVISAR!!!!
+            //REVISAR!!!! XXXXXXXXXXXXXXXXXXX //REVISAR ESTO, ESTA MALO!!! XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
             int cantidad_caras = 0, cantidad_superficiales = 0;
-            for (int fidx=0; fidx < FC.getFacesVec().size(); fidx++){
+            for (long unsigned int fidx=0; fidx < FC.getFacesVec().size(); fidx++){
+                cout << "Cara " << fidx << "(";
+                for (unsigned int L=0; L <FC.getFacesVec()[fidx].getPoints().size(); L++){
+                    cout << FC.getFacesVec()[fidx].getPoints()[L] << " ";
+                }
                 
+                cout  << ") esta presente en " << FC.getFace(fidx).numberOfElements() << " elemento(s)\n";
                 if(FC.getFace(fidx).numberOfElements()==1){
                     // std::cout << fidx << ":" << FC.getFace(fidx).numberOfElements() << "\n";
                     cantidad_superficiales++;
@@ -459,7 +487,7 @@ namespace Clobscode
 			for( int i=0;i<cant;i++){
 				std::vector<unsigned int> fpts(3,0);
 				for(unsigned int j=0;j<3;j++){
-					std::fscanf(file,"%i",&fpts[j]);
+					std::fscanf(file,"%u",&fpts[j]);
 				}
 				//read some unnecessary integers
 				for(unsigned int j=0;j<3;j++)
@@ -807,7 +835,7 @@ namespace Clobscode
             //write the volume mesh
             FILE *f = fopen(vol_name.c_str(),"wt");
             
-            unsigned int n = points.size();
+            //unsigned int n = points.size();
             
             fprintf(f,"MIXED\n%i %i\n\n",(int)points.size(),(int)elements.size());
             
@@ -910,7 +938,8 @@ namespace Clobscode
         
         //-------------------------------------------------------------------
         //-------------------------------------------------------------------
-        static bool WriteVTK(std::string name, vector<Point3D> &points, vector<vector<unsigned int> > &elements){
+        static bool WriteVTK(std::string name, vector<Point3D> &points, vector<vector<unsigned int> > &elements,
+                            unsigned int index_pivot, vector <unsigned int> cellTypes){
             
             // vector<Point3D> points = output.getPoints();
             // vector<vector<unsigned int> > elements = output.getElements();
@@ -969,10 +998,39 @@ namespace Clobscode
             }
             
             fprintf(f,"\nCELL_TYPES %i\n",(int)elements.size());
-            for (unsigned int i=0; i<elements.size(); i++) {
+            if (cellTypes.size() > 0){
+                for (unsigned int i=0; i<index_pivot; i++) {
+                    fprintf(f, "%u\n", cellTypes[i]);
+                }
+            }
+            else{
+                for (unsigned int i=0; i<index_pivot; i++) {
+                    unsigned int np = elements[i].size();
+                    if (np == 3) {
+                        fprintf(f,"5\n");
+                    }
+                    else if (np == 4) {
+                        fprintf(f,"9\n");
+                    }
+                    else if (np == 5){
+                        fprintf(f,"14\n");
+                    }
+                    else if (np == 6){
+                        fprintf(f,"13\n");
+                    }
+                    else if (np == 8){
+                        fprintf(f,"12\n");
+                    }
+                }
+            }
+            
+            for (unsigned int i=index_pivot; i<elements.size(); i++) {
                 unsigned int np = elements[i].size();
-                if (np == 4) {
-                    fprintf(f,"10\n");
+                if (np == 3) {
+                    fprintf(f,"5\n");
+                }
+                else if (np == 4){
+                    fprintf(f,"9\n");
                 }
                 else if (np == 5){
                     fprintf(f,"14\n");

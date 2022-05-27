@@ -24,6 +24,7 @@
 #include <ctime>
 #include <string.h>
 #include <iostream>
+#include<math.h>
 
 
 using Clobscode::RefinementRegion;
@@ -76,7 +77,7 @@ using std::string;
 
 
 
-AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist, unsigned int num_layers, vector <unsigned int> Whitelist_faces){
+AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist, unsigned int num_layers, vector <unsigned int> Whitelist_faces, float distance_multiplier){
     vector <Face> FVector;
     for (int i=0;i<VUI.size(); i++){
         Face Ftemp(VUI[i]);
@@ -117,6 +118,7 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
     // }
     
     
+    
     for (unsigned int fidx=0; fidx< FVector.size(); fidx++){        
         for (unsigned int nidx=0; nidx < nodesInSurface.size(); nidx++){
             if(FVector[fidx].hasPoint(nidx) && nodesInSurface[nidx]==0){
@@ -124,7 +126,9 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
             }
         }
     }
-    
+    cout << "FaceVector: " << VUI.size() << "\n";
+    cout << "Puntos: " << Puntos.size() << "\n";
+
     NormalRepair NR = NormalRepair(Puntos, FVector);
     
 
@@ -208,26 +212,11 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
         for (unsigned int pointIdx = 0; pointIdx < NodeProjectionVector.size(); pointIdx++){
             // if (nodesInSurface[pointIdx] == 1 && pointsInWhitelist[pointIdx] == 1){
                 // cout << "Pointidx: " << pointIdx << "\n";
-                Point3D newPoint(Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].X()+layer*dist*NodeProjectionVector[pointIdx].getNormal().X(),   //si no funciona sacar el layer*
-                            Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].Y()+layer*dist*NodeProjectionVector[pointIdx].getNormal().Y(),        //si no funciona sacar el layer*
-                            Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].Z()+layer*dist*NodeProjectionVector[pointIdx].getNormal().Z());       //si no funciona sacar el layer*
+                Point3D newPoint(Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].X()+(layer*dist*NodeProjectionVector[pointIdx].getNormal().X()*pow(distance_multiplier,layer)),   //si no funciona sacar el layer*
+                            Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].Y()+(layer*dist*NodeProjectionVector[pointIdx].getNormal().Y()*pow(distance_multiplier,layer)),        //si no funciona sacar el layer*
+                            Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].Z()+(layer*dist*NodeProjectionVector[pointIdx].getNormal().Z()*pow(distance_multiplier,layer)));       //si no funciona sacar el layer*
                 this -> new_points.push_back(newPoint); //posibilidad de tener que borrar este arreglo para dejarle la carga a la estructura NewPointRef
-                // if (layer == 1){
-                //     cout << pointIdx << "\n";
-                //     // NewPointRef NewNode(Puntos.size()*layer+pointIdx, pointIdx, newPoint); OLD - FUNCIONA
-                //     NewPointRef NewNode(Puntos.size()+offset, pointIdx, newPoint); // NEW - EXPERIMENTAL
-                //     NPR_arr.push_back(NewNode);
-                //     offset++;
-                // }
 
-                
-                // else {
-                //     NewPointRef NewNode(Puntos.size()*layer+pointIdx, Puntos.size()*(layer-1)+pointIdx, newPoint);
-                //     NPR_arr.push_back(NewNode);
-                // }
-
-                // cout << pointIdx << "\n";
-                // NewPointRef::NewPointRef(unsigned int Node_index, unsigned int father_index, Point3D proj)
                 if (layer == 1){
                     NewPointRef NewNode(Puntos.size()+offset, NodeProjectionVector[pointIdx].getNodeIndex(), newPoint); // NEW - EXPERIMENTAL
                     // cout << "Layer: "<< layer << "\nAgregando nodo\nNodeIndex: "<< Puntos.size()+offset << "\nFatherIndex: " << NodeProjectionVector[pointIdx].getNodeIndex()+(Puntos.size()*(layer-1)) << "\nPunto: " << newPoint << "\n---\n";
