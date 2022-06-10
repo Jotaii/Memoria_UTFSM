@@ -77,40 +77,82 @@ using std::string;
 
 
 
-AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist, unsigned int num_layers, vector <unsigned int> Whitelist_faces, float distance_multiplier){
+AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist, unsigned int num_layers, vector <unsigned int> Whitelist_faces, float distance_multiplier, bool faces_whitelist_given){
+    
+
     vector <Face> FVector;
     for (int i=0;i<VUI.size(); i++){
         Face Ftemp(VUI[i]);
         FVector.push_back(Ftemp);
     }
+
+    NormalRepair NR = NormalRepair(Puntos, FVector);
+        
+    vector < vector <unsigned int>> VUI2;
     
+    vector <Face> NRF;
+    if (faces_whitelist_given){
+        FVector.clear();
+        for (long unsigned int i=0; i < VUI.size(); i++){
+            // filter whitelist v2
+            if (Whitelist_faces[i] == 1){
+                // VUI.erase(VUI.begin() + i);
+                // cout << "Agregando cara: [";
+                // for (unsigned K=0; K<NR.getFaces()[i].getPoints().size();K++){
+                    // cout<< NR.getFaces()[i].getPoints()[K]<< ",";
+                // }
+                // cout << "]\n";
+                FVector.push_back(NR.getFaces()[i]);
+                VUI2.push_back(VUI[i]);
+            }
+        }
+        NRF = FVector;
+    }
+    
+    else {
+        VUI2 = VUI;
+        NRF = NR.getFaces();
+    }
+
+    
+    // for (int i=0;i<VUI2.size(); i++){
+    //     Face Ftemp(VUI2[i]);
+    //     FVector.push_back(Ftemp);
+    // }
+
+    
+
     // std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
     // std::cout << "Numero de caras: " << FVector.size() << "\n";
 
-    vector <unsigned int> nodesInSurface;
-    vector <unsigned int> pointsInWhitelist;
+
+    vector <unsigned int> nodesInSurface; //1 si el nodo i-esimo esta en la superficie, 0 en caso contrario
+    vector <unsigned int> pointsInWhitelist; //1 si el nodo i-esimo esta en la whitelist, 0 en caso contrario
+    
     for (int i=0; i< Puntos.size();i++){
         nodesInSurface.push_back(0);
-        if (Whitelist_faces.size() > 0){
+        if (faces_whitelist_given){
+            // cout << "agregando i: " << i << "porque whitelist size es: " << Whitelist_faces.size() << "\n";
             pointsInWhitelist.push_back(1);
         }
         else
         pointsInWhitelist.push_back(0);
     }
+
     
     //aqui esta el problema
     // unsigned int wListCounter;
     // for (unsigned int i=0; i<VUI.size(); i++){
     //     wListCounter = wListCounter + Whitelist_faces[i];
     // }
-    cout<<VUI.size() << "\n";
+    // cout<<VUI2.size() << "\n";
     // cout<<wListCounter << "\n";
     // if (Whitelist_faces.size()>0){
-    for (unsigned int i=0; i<VUI.size(); i++){
+    for (unsigned int i=0; i<VUI2.size(); i++){
         // if (Whitelist_faces[i] == 1){
-        for(unsigned int j=0; j<VUI[i].size(); j++){
-            if (pointsInWhitelist[VUI[i][j]] == 0){
-                pointsInWhitelist.at(VUI[i][j]) = 1;
+        for(unsigned int j=0; j<VUI2[i].size(); j++){
+            if (pointsInWhitelist[VUI2[i][j]] == 0){
+                pointsInWhitelist.at(VUI2[i][j]) = 1;
             }
         }
         // }
@@ -126,14 +168,13 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
             }
         }
     }
-    cout << "FaceVector: " << VUI.size() << "\n";
-    cout << "Puntos: " << Puntos.size() << "\n";
+    // cout << "FaceVector: " << VUI2.size() << "\n";
+    // cout << "Puntos: " << Puntos.size() << "\n";
 
-    NormalRepair NR = NormalRepair(Puntos, FVector);
     
-
-    vector <Face> NRF = NR.getFaces();
-
+    
+    // //BORRAR
+    // vector <Face> NRF = FVector;
 
     vector <NodeProjection> NodeProjectionVector;
     NodeProjectionVector.reserve(Puntos.size());
@@ -236,10 +277,10 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
             // }
         }
     }
-    cout << "NPR Size: " << NPR_arr.size() << "\n";
+    // cout << "NPR Size: " << NPR_arr.size() << "\n";
     this -> normals = NodeProjectionVector;
     this -> arr_points = Puntos;
-    this -> arr_faces = VUI;
+    this -> arr_faces = VUI2;
 
     // cout << "VUI at end: " << VUI.size() << "\n";
     // cout << "num_layers: " << num_layers << "\n";

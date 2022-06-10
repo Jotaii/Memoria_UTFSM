@@ -123,10 +123,10 @@ NormalRepair::NormalRepair(vector<Clobscode::Point3D> &puntos, vector<Face> &fv)
     // std::cout << "Caras TriMesh:" << tMesh.getFaces().size() << "\n";
 
     vector <unsigned int> output_isinMesh = tMesh.pointIsInMeshIdx(out_bbox);
-    if (output_isinMesh.size() == 3){
-        std::cout << "InMesh? " << output_isinMesh[0] << "\nFaceIndex: " 
-             << caras_ref[output_isinMesh[1]] << "\nNeedRepair? " << output_isinMesh[2] << "\n";
-    }
+    // if (output_isinMesh.size() == 3){
+    //     std::cout << "InMesh? " << output_isinMesh[0] << "\nFaceIndex: " 
+    //          << caras_ref[output_isinMesh[1]] << "\nNeedRepair? " << output_isinMesh[2] << "\n";
+    // }
 
 
     unsigned int initial_face_index = caras_ref[output_isinMesh[1]];//closestTriangle;

@@ -54,30 +54,6 @@ void endMsg(){
     cout << "    -m save output mesh in M3D ASCII format (m3d)\n";
 }
 
-// void print(vector<Face> V){
-//     for (unsigned int i=0; i<V.size(); i++){
-//         cout << i <<" | [ ";
-//         for (int j=0; j < V[i].getPoints().size(); j++){
-//             cout << V[i].getPoints()[j];
-//             if (j != V[i].getPoints().size()-1){
-//                 cout << ", ";
-//             }
-//         }
-//         cout << "]\n";
-//     }
-// }
-
-// void print(vector <unsigned int>V){
-//     cout << "[ ";
-//     for (int j=0; j < V.size(); j++){
-//         cout << V[j];
-//         if (j != V.size()-1){
-//             cout << ", ";
-//         }
-//     }
-//     cout << "]\n";
-// }
-
 
 int main(int argc,char** argv){
     
@@ -93,7 +69,7 @@ int main(int argc,char** argv){
 
     //inputs
     vector <Point3D> Puntos;
-    vector <vector <unsigned int>> VUI;
+    vector <vector <unsigned int>> VUI, OriginalMesh;
     vector <unsigned int> cellTypes;
 
     vector<Clobscode::TriMesh> inputs;
@@ -105,6 +81,7 @@ int main(int argc,char** argv){
     
     //Default values for options
     int distance_between_layers, layers_qty;
+    unsigned int index_pivot = 0;
     string faces_whitelist;
     bool distance_given=false, layers_given=false, faces_whitelist_given=false, distance_multiplier_given=false, show_previous_mesh=false;
     float distance_multiplier;
@@ -148,7 +125,7 @@ int main(int argc,char** argv){
                 plyfor = true;
                 oneout = true;
                 continue;
-            case 'k':
+            case 'k': //si -k es entregado, se muestra el mesh no expandido
                 show_previous_mesh = true;
                 continue;
                 break;
@@ -185,11 +162,12 @@ int main(int argc,char** argv){
                 break;
             case 'V': //para archivos .vtk
                 in_name = argv[i+1];
-                if (!Services::readVtk(in_name, Puntos, VUI, cellTypes)) {
+                if (!Services::readVtk(in_name, Puntos, VUI, OriginalMesh, cellTypes)) {
                     std::cerr << "couldn't read file " << argv[i+1] << std::endl;
                     return 1;
                 }
                 in_name_given = true;
+
                 i++;
                 break;
 
@@ -249,7 +227,7 @@ int main(int argc,char** argv){
         Whitelist_faces.push_back(0);
     }
 
-    vector < vector <unsigned int>> VUI2;
+    
     if (faces_whitelist_given){
         //lectura de archivo intento 1
         std::ifstream indata;
@@ -263,40 +241,16 @@ int main(int argc,char** argv){
         while ( !indata.eof() ) { // keep reading until end-of-file
             if (num < VUI.size()){
                 Whitelist_faces.at(num) = 1;
+                index_pivot++;
             }
             // cout << "The next number is " << num << endl;
             indata >> num; // sets EOF flag if no value found
         }
         indata.close();
-        cout << "Whitelist cargada correctamente.." << endl;
-        // cout << "[";
-        // for (unsigned int i=0; i < Whitelist_faces.size(); i++){
-        //     cout << Whitelist_faces[i] << " ";
-        // }
-        // cout << "]\n";
-
+        // cout << "Whitelist ("<<Whitelist_faces.size()<<") cargada correctamente.." << endl;
         
-        for (long unsigned int i=0; i < VUI.size(); i++){
-            // filter whitelist v2
-            if (Whitelist_faces[i] == 1){
-                // VUI.erase(VUI.begin() + i);
-                VUI2.push_back(VUI[i]);
-            }
-            
-        }
-        // cout << "[";
-        // for (unsigned int i=0; i < VUI2.size(); i++){
-        //     cout << "[";
-        //     for (unsigned int j=0; j < VUI2[i].size(); j++){
-        //         cout << VUI2[i][j] << " ";
-        //     }
-        //     cout << "], ";
-        // }
-        // cout << "]\n";
     }
-    else {
-        VUI2 = VUI;
-    }
+    
 
     if (distance_given == false) {
         distance_between_layers = 1;
@@ -309,31 +263,9 @@ int main(int argc,char** argv){
     if (distance_multiplier_given == false){
             distance_multiplier = 1;
         }
-    
-
-    // else {
-    //     // for (int i=0; i<Puntos.size(); i++){
-    //     //     std::cout << Puntos[i] << "\n";
-    //     // }
-    //     vector <Face> FVector;
-    //     for (int i=0;i<VUI.size(); i++){
-    //         Face Ftemp(VUI[i]);
-    //         FVector.push_back(Ftemp);
-    //         // FVector[i].print();
-    //     }
-
-    //     std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
-    //     std::cout << "Numero de caras: " << FVector.size() << "\n";
-    // }
+    	
 	
-    
-	//give default output name if non is provided
-	if (!out_name_given) {
-		unsigned int last_point = in_name.find_last_of(".");
-		out_name = in_name.substr(0,last_point);
-	}
-	
-    // auto start_time = chrono::high_resolution_clock::now();
+    auto start_time = chrono::high_resolution_clock::now();
     
     // //Generate the mesh following the above constraints.
 	// Clobscode::Mesher mesher;
@@ -343,59 +275,88 @@ int main(int argc,char** argv){
 
     /***************************** Codigo que genera las mallas nuevas **********************************/
     
-    AdvancingPoint AP(Puntos, VUI2, distance_between_layers, layers_qty, Whitelist_faces, distance_multiplier); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
     
-    //BORRAR ESTE FOR, solo para control debuger
-    // for (long unsigned int i=0; i<AP.getNormals().size(); i++){
-    //     cout << "normal : " << AP.getNormals()[i].getNormal() << " perteneciente al punto original: " << AP.getNormals()[i].getNodeIndex() << "\n";
-    // }
 
-    cout << "VUI SIZE: " << VUI.size() << "\n";
-    cout << "VUI2 SIZE: " << VUI2.size() << "\n";
-    cout << "NewElems Size: " << AP.getFaces().size() << "\n";
-    cout << "cellTypes Size: " << cellTypes.size() << "\n";
+    AdvancingPoint AP(Puntos, VUI, distance_between_layers, layers_qty, Whitelist_faces, distance_multiplier, faces_whitelist_given); // Hasta aqui tengo las normales por punto, los puntos, las caras del cascaron con su normal arreglada.
     
-    unsigned int index_pivot = VUI.size();
-    for (unsigned int k=0; k < index_pivot; k++){cout<<k<< " ";} cout << "\n";
-    for (unsigned int k=VUI.size(); k<index_pivot+AP.getFaces().size(); k++){cout << k << " ";} cout << "\n";
+
+    // cout << "VUI SIZE: " << VUI.size() << "\n";
+    // cout << "NewElems Size: " << AP.getFaces().size() << "\n";
+    // cout << "cellTypes Size: " << cellTypes.size() << "\n";
     
-    cout << "oldpoints\t\tnormals\n";
-    for (int i=0; i<AP.getNormals().size(); i++){
-        cout << AP.getNormals()[i].getNodeIndex() << "-> " << AP.getPoints()[AP.getNormals()[i].getNodeIndex()] << "\t\t" << AP.getNormals()[i].getNormal() << "\n";
+    bool IsVolMesh = false;
+    for(unsigned int i=0; i < cellTypes.size();i++){
+        if (cellTypes[i] >= 9){
+            IsVolMesh = true;
+            break;
+        }
     }
+    
+    // cout << "oldpoints\t\tnormals\n";
+    // for (int i=0; i<AP.getNormals().size(); i++){
+    //     cout << AP.getNormals()[i].getNodeIndex() << "-> " << AP.getPoints()[AP.getNormals()[i].getNodeIndex()] << "\t\t" << AP.getNormals()[i].getNormal() << "\n";
+    // }
     
     //agregar nuevos puntos y elementos a los arreglos
     // cout << "newpoints ["<< AP.getNewPoints().size() <<"]\n";
     for (long unsigned int i=0; i<AP.getNewPoints().size(); i++){
         Puntos.push_back(AP.getNewPoints()[i]);
-        cout << AP.getPoints().size()+i << "-> " << AP.getNewPoints()[i] << "\n";
+        // cout << AP.getPoints().size()+i << "-> " << AP.getNewPoints()[i] << "\n";
     }
 
     vector < vector<unsigned int>> T1 = AP.getFaces();
     for (long unsigned int i=0; i<AP.getFaces().size(); i++){ //evaluar cambio de nombre de getFaces a getElems
         VUI.push_back(AP.getFaces()[i]);
     }
+    
 
-    if (show_previous_mesh){
+    if (show_previous_mesh && IsVolMesh == false){
         //add previous elements to mesh
-        cout << "Agregando caras y elementos no expandidos\n";
+        // cout << "Agregando caras y elementos no expandidos\n";
+        // index_pivot = VUI.size();
         for (int i=Whitelist_faces.size()-1; i >= 0;i--){
             if (Whitelist_faces[i] == 0){
                 T1.insert(T1.begin(), VUI[i]);
             }
         }
     }
+
+    else if (show_previous_mesh && IsVolMesh == true){
+        // cout << "---OriginalMesh---\n";
+        for(unsigned int V=OriginalMesh.size(); V>0; V--){
+            // cout << "[";
+            // for(unsigned X=0; X<OriginalMesh[V-1].size(); X++){
+            //     cout << " " << OriginalMesh[V-1][X] << "";
+            // }
+            T1.insert(T1.begin(), OriginalMesh[V-1]);
+            // cout << "]\n";
+        }
+        // cout << "---------\n";
+        // cout << "---OriginalCellTypes---\n";
+        // cout << "[";
+        // for(unsigned int V=cellTypes.size(); V>0; V--){
+        //     cout << " " << cellTypes[V-1] << "";
+            
+        // }
+        // cout << "]\n";
+        // cout << "---------\n";
+        
+    }
+
+    else if(show_previous_mesh==false && IsVolMesh == true){
+        cellTypes = {};
+    }
     
-    cout << "T1 size: " << T1.size() << "\n";
+    // cout << "T1 size: " << T1.size() << "\n";
     // for (unsigned int k=0; k <T1.size(); k++){
-    //     cout << "[";
+    //     // cout << "[";
     //     for (unsigned int l=0; l<T1[k].size(); l++){
     //         cout << T1[k][l] << " ";
     //     }
-    //     cout << "]\n";
+    //     // cout << "]\n";
     // }
 
-    for (unsigned int PP=0; PP < cellTypes.size(); PP++){ cout << "cellTypes[" << PP << "] = " <<cellTypes[PP] << "\n";}
+    // for (unsigned int PP=0; PP < cellTypes.size(); PP++){ cout << "cellTypes[" << PP << "] = " <<cellTypes[PP] << "\n";}
 
     //pruebas de output generado
     output.setElements(T1);
@@ -403,13 +364,12 @@ int main(int argc,char** argv){
 
     /************************************************************************************/
 
-    
     if (vtkformat || !oneout) {
-        std::cout << "Esto imprime un output en vtk\n";
         // Services::WriteVTK(out_name, output);
-        Services::WriteVTK(out_name, Puntos, T1, index_pivot, cellTypes);
+        Services::WriteVTK(out_name, Puntos, T1, index_pivot, cellTypes, IsVolMesh);
+        cout << "Output generado satisfactoriamente.\n";
         // Services::WriteVTK(out_name, Puntos, VUI);
-        Services::WriteMeshGetfem(out_name, output);
+        // Services::WriteMeshGetfem(out_name, output);
     }
 
     // if (m3dfor) {
@@ -422,13 +382,12 @@ int main(int argc,char** argv){
     //     std::cout << "Esto imprime un output en mvm\n"; 
     // }
 
-    // auto end_time = chrono::high_resolution_clock::now();
-    // cout << "  All done in " << chrono::duration_cast<chrono::milliseconds>(end_time-start_time).count();
-    // cout << " ms"<< endl;
+    auto end_time = chrono::high_resolution_clock::now();
+    cout << "  All done in " << chrono::duration_cast<chrono::milliseconds>(end_time-start_time).count();
+    cout << " ms"<< endl;
 	
     //FIN CODIGO PROFE
 
-    // MI CODIGO
 
     return 0;
 }

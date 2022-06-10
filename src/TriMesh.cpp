@@ -499,7 +499,7 @@ namespace Clobscode
 
 		// define if a point is inside a mesh or not
 		Point3D caca = pPoint;
-		cout << "testing point " << caca << "\n";
+		// cout << "testing point " << caca << "\n";
 		
 		// index of the closest triangle
 		unsigned int closestTriangle = 0;
@@ -523,14 +523,14 @@ namespace Clobscode
 		
 		// browsing all the surface faces for min distance.
 		for (unsigned int iSurfF = 0; iSurfF < mTriangles.size(); iSurfF++) {
-			std::cout << "\n---- Control Before----\n";
-			std::cout << "TriangleNormal: " << mTriangles[iSurfF].getNormalizedNormal() << "\n";
-			for(unsigned int OO=0; OO < mTriangles[iSurfF].getPoints().size() ; OO++){
-				std::cout << "\tPoint("<<OO<<"): " << mTriangles[iSurfF].getPoints()[OO] << "\n";
-			}
+			// std::cout << "\n---- Control Before----\n";
+			// std::cout << "TriangleNormal: " << mTriangles[iSurfF].getNormalizedNormal() << "\n";
+			// for(unsigned int OO=0; OO < mTriangles[iSurfF].getPoints().size() ; OO++){
+			// 	std::cout << "\tPoint("<<OO<<"): " << mTriangles[iSurfF].getPoints()[OO] << "\n";
+			// }
 			
-			std::cout << "pPoint: " << pPoint << "\nclosestDist: " << closestDist << "\npDist: " << pDist
-			          << "\npProjP: " << pProjP << "\npIsIn: " << pIsIn << "\n";
+			// std::cout << "pPoint: " << pPoint << "\nclosestDist: " << closestDist << "\npDist: " << pDist
+			//           << "\npProjP: " << pProjP << "\npIsIn: " << pIsIn << "\n";
 
 			// computing the distance for this face (triangle)
 			SignedDistToTriangle(pPoint,iSurfF,closestDist,pDist,pProjP,pIsIn,faceEdgeNode);
@@ -546,9 +546,13 @@ namespace Clobscode
 				iFaceEdgeNode = faceEdgeNode;
 			}
 
-			std::cout << "\n---- Control After----\n";
-			std::cout << "pPoint: " << pPoint << "\nclosestDist: " << closestDist << "\npDist: " << pDist
-			          << "\npProjP: " << pProjP << "\npIsIn: " << pIsIn << "\n\n";
+			// std::cout << "\n---- Control After----\n";
+			// std::cout << "TriangleNormal: " << mTriangles[iSurfF].getNormalizedNormal() << "\n";
+			// for(unsigned int OO=0; OO < mTriangles[iSurfF].getPoints().size() ; OO++){
+			// 	std::cout << "\tPoint("<<OO<<"): " << mTriangles[iSurfF].getPoints()[OO] << "\n";
+			// }
+			// std::cout << "pPoint: " << pPoint << "\nclosestDist: " << closestDist << "\npDist: " << pDist
+			//           << "\npProjP: " << pProjP << "\npIsIn: " << pIsIn << "\n\n";
 		}
 		// std:: cout << mTriangles[closestTriangle-1].getPoints()[0] << " " << mTriangles[closestTriangle-1].getPoints()[1] << " " << mTriangles[closestTriangle-1].getPoints()[2] << "\n";
 		// std::cout << "CT: " << closestTriangle-1 << "\n";

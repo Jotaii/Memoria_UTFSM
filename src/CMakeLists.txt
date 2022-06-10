@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(jens_repair)
+project(node_exp)
 
 #set(CMAKE_BUILD_TYPE Release)
 
@@ -49,4 +49,4 @@ set(SOURCE_FILES MeshPoint Point3D TriMesh Octant OctreeEdge HexRotation
         Visitors/RemoveSubElementsVisitor)
 
 
-add_executable(jens_repair ${SOURCE_FILES}) 
+add_executable(node_exp ${SOURCE_FILES}) 
