@@ -1,3 +1,0 @@
-/home/juan/Documentos/MEMORIA/Memoria_UTFSM/src/CMakeFiles/rebuild_cache.dir
-/home/juan/Documentos/MEMORIA/Memoria_UTFSM/src/CMakeFiles/edit_cache.dir
-/home/juan/Documentos/MEMORIA/Memoria_UTFSM/src/CMakeFiles/jens_repair.dir
