@@ -31,22 +31,11 @@ math/Vector
 )
 
 
-set(SOURCE_FILES MeshPoint Point3D TriMesh Octant OctreeEdge HexRotation
-        SurfTemplate1 SurfTemplate2 SurfTemplate3 SurfTemplate4
-        SurfTemplate5 SurfTemplate6 SurfTemplate7
-        Mesher GridMesher TransitionPoint PatternFactory TransitionTemplate
+set(SOURCE_FILES Point3D TriMesh TransitionPoint
         TransitionCube SurfPair SurfEdge SurfEdgeContainer SurfTriangle
-        RefinementRegion RefinementCubeRegion RefinementSurfaceRegion
-        RefinementInputSurfaceRegion RefinementAllRegion
-        FaceDiagonal SurfPrism SurfPyramid SurfHexahedron SurfTetrahedron 
-	SurfaceEdge GeometricTransform Face FaceContainer 
-        Element Hexahedron Pyramid PyramidBase5 Tetrahedron Prism2
-        NodeProjection NormalRepair AdvancingPoint NewPointRef memoria 
-        Visitors/Visitor Visitors/SplitVisitor Visitors/EdgeVisitor 
-	Visitors/IntersectionsVisitor
-        Visitors/OneIrregularVisitor Visitors/PointMovedVisitor
-        Visitors/TransitionPatternVisitor Visitors/SurfaceTemplatesVisitor
-        Visitors/RemoveSubElementsVisitor)
+        Face FaceContainer Element Hexahedron Pyramid PyramidBase5 
+        Tetrahedron Prism2 NodeProjection NormalRepair AdvancingPoint
+        NewPointRef Main)
 
 
 add_executable(node_exp ${SOURCE_FILES}) 
