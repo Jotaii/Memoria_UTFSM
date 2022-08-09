@@ -15,10 +15,6 @@
 #include <string.h>
 #include <iostream>
 
-
-using Clobscode::RefinementRegion;
-using Clobscode::RefinementCubeRegion;
-using Clobscode::RefinementSurfaceRegion;
 using Clobscode::Point3D;
 
 
@@ -45,9 +41,9 @@ class NodeProjection{
         void print();
 
         //devuelve el indice del elemento siguiente segun el nodo en cuestion
-        unsigned int NextNode(vector <unsigned int> FaceNodes);
+        unsigned int *NextNode(vector <unsigned int> FaceNodes);
         
-        unsigned int PreviousNode(vector <unsigned int> FaceNodes);
+        unsigned int *PreviousNode(vector <unsigned int> FaceNodes);
 
         void CalcPreNormal(vector <Point3D> Puntos, unsigned int debug=0);
 

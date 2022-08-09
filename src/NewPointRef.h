@@ -16,9 +16,6 @@
 #include <iostream>
 
 
-using Clobscode::RefinementRegion;
-using Clobscode::RefinementCubeRegion;
-using Clobscode::RefinementSurfaceRegion;
 using Clobscode::Point3D;
 
 

@@ -23,13 +23,6 @@
 #include <string.h>
 #include "TriMesh.h"
 #include "FEMesh.h"
-#include "RefinementCubeRegion.h"
-#include "RefinementSurfaceRegion.h"
-#include "RefinementInputSurfaceRegion.h"
-#include "RefinementAllRegion.h"
-#include "MeshPoint.h"
-#include "Octant.h"
-#include "OctreeEdge.h"
 #include "FaceContainer.h"
 #include "Element.h"
 #include "Hexahedron.h"
@@ -37,7 +30,6 @@
 #include "PyramidBase5.h"
 #include "Tetrahedron.h"
 #include "Prism2.h"
-#include "Visitors/EdgeVisitor.h"
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
@@ -46,111 +38,18 @@
 
 using Clobscode::Point3D;
 using Clobscode::TriMesh;
-using Clobscode::MeshPoint;
-using Clobscode::Octant;
-using Clobscode::OctreeEdge;
 using std::vector;
 using std::string;
 using std::set;
 
 namespace Clobscode
 {
-	
+    // IMPORTANT!! just VTK and OFF are developed.
+
 	class Services {
         
         public:
         
-        
-        //-------------------------------------------------------------------
-        //-------------------------------------------------------------------
-        
-        static unsigned short readRefinementRegions(string name,
-                                                    list<RefinementRegion *> &regions){
-            
-            char word [256];
-            int cant;
-            double x,y,z;
-            unsigned short max_refinement = 0;
-            
-            vector<Point3D> cube_pts;
-            
-            FILE *file = fopen(name.c_str(),"r");
-            
-            if (file==NULL) {
-                std::cout << "File " << name << " doesn't exist\n";
-                return max_refinement;
-            }
-            
-            //read number of nodes
-            while(true){
-                if(std::fscanf(file,"%s",word)==EOF){
-                    fclose(file);
-                    return max_refinement;
-                }
-                if(!strcmp(word,"n_regions\0"))
-                    break;
-            }
-            std::fscanf(file,"%i",&cant);
-            
-            //read each node
-            cube_pts.reserve(cant*2);
-            
-            for( int i=0;i<cant;i++){
-                
-                //Read region's first point
-                std::fscanf(file,"%s",word);
-                x = atof(word);
-                std::fscanf(file,"%s",word);
-                y = atof(word);
-                std::fscanf(file,"%s",word);
-                z = atof(word);
-                Point3D p1 (x,y,z);
-                
-                //Read region's second point
-                std::fscanf(file,"%s",word);
-                x = atof(word);
-                std::fscanf(file,"%s",word);
-                y = atof(word);
-                std::fscanf(file,"%s",word);
-                z = atof(word);
-                Point3D p2 (x,y,z);
-                
-                //Read Refinement Level
-                unsigned short rrl = 0;
-                std::fscanf(file,"%s",word);
-                rrl = atoi(word);
-                
-                if (rrl>max_refinement) {
-                    max_refinement = rrl;
-                }
-                
-                RefinementRegion *rr = new RefinementCubeRegion(p1,p2,rrl);
-                
-                regions.push_back(rr);
-            }
-            
-            fclose(file);
-            
-            return max_refinement;
-        }
-        
-        //-------------------------------------------------------------------
-        //-------------------------------------------------------------------
-        // static bool readSurfaceRefinementRegion(string name,
-        //                                         list<RefinementRegion *> &regions,
-        //                                         const unsigned short &rrl){
-            
-        //     vector<TriMesh> tmp;
-        //     tmp.reserve(1);
-        //     if (!ReadMdlMesh(name,tmp, )) {
-        //         return false;
-        //     }
-        //     RefinementRegion *rr = new RefinementSurfaceRegion(tmp[0],rrl);
-        //     regions.push_back(rr);
-            
-        //     return true;
-        // }
-
         //-------------------------------------------------------------------
         //-------------------------------------------------------------------
         static bool ReadOffMesh(string name,
@@ -161,8 +60,7 @@ namespace Clobscode
             int np, nf;
             double x,y,z;
             bool skel = false;
-            // vector<vector<unsigned int> > allfaces;
-            // vector<Point3D> tri_pts;
+
             
             FILE *file = fopen(name.c_str(),"r");
             
@@ -201,7 +99,6 @@ namespace Clobscode
             }
             
             //read each node
-            // tri_pts.reserve(np);
             Points.reserve(np);
             
             for( int i=0;i<np;i++){
@@ -216,7 +113,6 @@ namespace Clobscode
                 fgets(word,256,file);
             }
             
-            // allfaces.reserve(nf);
             Faces.reserve(np);
             //number of face points
             int nfp;
@@ -233,8 +129,7 @@ namespace Clobscode
             }
             fclose(file);
             
-            // TriMesh tm (tri_pts, allfaces);
-            // clobs_inputs.push_back(tm);
+
             
             return true;
         }
@@ -403,27 +298,19 @@ namespace Clobscode
                 originalSrc.push_back(elements[i]->getPoints());
             }
             
-            //REVISAR!!!! XXXXXXXXXXXXXXXXXXX //REVISAR ESTO, ESTA MALO!!! XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX CREO QUE YA NO ESTA MALO
+            
             int cantidad_caras = 0, cantidad_superficiales = 0;
-            for (long unsigned int fidx=0; fidx < FC.getFacesVec().size(); fidx++){
-                // cout << "Cara " << fidx << "(";
-                // for (unsigned int L=0; L <FC.getFacesVec()[fidx].getPoints().size(); L++){
-                //     cout << FC.getFacesVec()[fidx].getPoints()[L] << " ";
-                // }
-                
-                // cout  << ") esta presente en " << FC.getFace(fidx).numberOfElements() << " elemento(s)\n";
+            for (long unsigned int fidx=0; fidx < FC.getFacesVec().size(); fidx++){  
                 if(FC.getFace(fidx).numberOfElements()==1){
-                    // std::cout << fidx << ":" << FC.getFace(fidx).numberOfElements() << "\n";
+                    
                     cantidad_superficiales++;
                     faces.push_back(FC.getFace(fidx).getPoints());
                 }
                 cantidad_caras++;
             }
-            // std::cout << "Cantidad de caras de la malla: " << cantidad_caras << "\n";
-            // std::cout << "Cantidad de caras superficiales: " << cantidad_superficiales << "\n";
             return true;
         }
-
+        
 
 		static bool ReadMdlMesh(std::string name,
 								  vector<Point3D> &pts,
@@ -506,254 +393,6 @@ namespace Clobscode
 			
 			return true;
 		}
-        
-        // //-------------------------------------------------------------------
-        // //-------------------------------------------------------------------
-        // static bool ReadOctantList(std::string name, list<unsigned int> &olist,
-        //                            vector<unsigned int> &ele_oct_ref) {
-        //     FILE *file = fopen(name.c_str(),"r");
-        //     int idx = 0;
-        //     char word [256];
-        //     while (std::fscanf(file,"%s",word) != EOF) {
-        //         bool num = true;
-        //         for (unsigned int i=0; word[i]!= '\0'; i++) {
-        //             if (!isdigit(word[i])) {
-        //                 num = false;
-        //                 break;
-        //             }
-        //         }
-        //         if(num) {
-        //             idx = atoi(word);
-        //             if (ele_oct_ref.size()<=idx) {
-        //                 cerr << "Invalid element index while reading list of elements to refine\n";
-        //                 cerr << "Octree mesh must be readed before the list is provided\n";
-        //                 cerr << "Abortig!!!\n";
-        //                 std:abort();
-        //             }
-                
-        //             olist.push_back(ele_oct_ref[idx]);
-        //         }
-        //     }
-        //     olist.sort();
-        //     olist.unique();
-        //     fclose(file);
-        //     return true;
-        // }
-        
-        
-        
-        // //-------------------------------------------------------------------
-        // //-------------------------------------------------------------------
-        // static bool ReadOctreeMesh(std::string name, vector<MeshPoint> &points,
-        //                            vector<Octant> &octants,
-        //                            set<OctreeEdge> &edges,
-        //                            vector<unsigned int> &ele_oct_ref,
-        //                            GeometricTransform &gt,
-        //                            unsigned short &minrl,
-        //                            unsigned short &maxrl) {
-            
-        //     char word [256];
-        //     double x,y,z;
-        //     int e1,e2,e3,elem;
-        //     int np=0, ne=0, no=0, nl=0;
-            
-        //     FILE *file = fopen(name.c_str(),"r");
-            
-        //     if (file==NULL) {
-        //         std::cout << "File " << name << " doesn't exist\n";
-        //         return false;
-        //     }
-            
-        //     //read header
-        //     std::fscanf(file,"%i",&np);
-        //     std::fscanf(file,"%i",&ne);
-        //     std::fscanf(file,"%i",&no);
-        //     std::fscanf(file,"%i",&nl);
-            
-        //     //read each node
-        //     points.reserve(np);
-
-        //     for(unsigned int i=0;i<np;i++){
-        //         std::fscanf(file,"%s",word);
-        //         x=atof(word);
-        //         std::fscanf(file,"%s",word);
-        //         y=atof(word);
-        //         std::fscanf(file,"%s",word);
-        //         z=atof(word);
-        //         Point3D p (x,y,z);
-        //         points.push_back(p);
-        //     }
-            
-        //     //read edges
-        //     for(unsigned int i=0;i<ne;i++){
-        //         std::fscanf(file,"%i",&e1);
-        //         std::fscanf(file,"%i",&e2);
-        //         std::fscanf(file,"%i",&e3);
-        //         OctreeEdge oe(e1,e2);
-        //         unsigned int mid = (unsigned int)e3;
-        //         oe.setMidPoint(mid);
-        //         edges.insert(oe);
-        //     }
-            
-        //     //read the element octant link
-        //     ele_oct_ref.reserve(nl);
-        //     unsigned int checksum = 0;
-        //     for (unsigned int i=0; i<no; i++) {
-        //         std::fscanf(file,"%i",&elem);
-        //         for (unsigned int j=0; j<elem; j++) {
-        //             ele_oct_ref.push_back(i);
-        //         }
-        //     }
-            
-        //     //read the octants, its refinement level and
-        //     //the input faces intersected by it.
-        //     octants.reserve(no);
-        //     int nop = 0, nof = 0, orl = 0, ni=0;
-            
-        //     minrl = 100;
-        //     maxrl = 0;
-            
-        //     unsigned int noregular=0;
-        //     for (unsigned int i=0; i<no; i++) {
-        //         vector<unsigned int> opts;
-        //         list<unsigned int> ofcs;
-        //         std::fscanf(file,"%s",word);
-        //         nop = atoi(word);
-        //         opts.reserve(nop);
-                
-        //         if (nop!=8) {
-        //             cerr << "warning at Services::ReadOctreeMesh\n";
-        //             cerr << "         Octant hasn't 8 nodes: " << nop << "\n";
-        //             cout << "octant index " << i << "\n";
-        //             continue;
-        //         }
-                
-        //         for (unsigned int j=0; j<nop; j++) {
-        //             std::fscanf(file,"%i",&ni);
-        //             opts.push_back(ni);
-        //         }
-        //         std::fscanf(file,"%i",&orl);
-        //         std::fscanf(file,"%i",&nof);
-        //         for (unsigned int j=0; j<nof; j++) {
-        //             std::fscanf(file,"%i",&ni);
-        //             ofcs.push_back(ni);
-        //         }
-        //         Octant octant (opts,orl);
-        //         octant.setIntersectedFaces(ofcs);
-        //         octants.push_back(octant);
-                
-        //         if (orl<minrl) {
-        //             minrl = short(orl);
-        //         }
-        //         if (orl>maxrl) {
-        //             maxrl = short(orl);
-        //         }
-        //     }
-            
-        //     std::fscanf(file,"%s %s",word,word);
-        //     std::fscanf(file,"%s",word);
-        //     x=atof(word);
-        //     std::fscanf(file,"%s",word);
-        //     y=atof(word);
-        //     std::fscanf(file,"%s",word);
-        //     z=atof(word);
-        //     Point3D c(x,y,z);
-        //     std::fscanf(file,"%s",word);
-        //     x=atof(word);
-        //     std::fscanf(file,"%s",word);
-        //     y=atof(word);
-        //     std::fscanf(file,"%s",word);
-        //     z=atof(word);
-        //     gt.setCentroid(c);
-        //     gt.setXAxis(x);
-        //     gt.setYAxis(y);
-        //     gt.setZAxis(z);
-            
-		// 	fclose(file);
-        //     return true;
-        // }
-    
-        // //-------------------------------------------------------------------
-        // //-------------------------------------------------------------------
-        // static bool WriteOctreeMesh(std::string name, vector<MeshPoint> &points,
-        //                             vector<Octant> &octants,
-        //                             set<OctreeEdge> &edges,
-        //                             const unsigned int &nels,
-        //                             GeometricTransform &gt){
-            
-        //     OctreeEdge oe;
-        //     set<OctreeEdge>::iterator my_edge;
-            
-        //     string vol_name = name+".oct";
-            
-        //     //write the volume mesh
-        //     FILE *f = fopen(vol_name.c_str(),"wt");
-        //     unsigned int np = points.size();
-        //     unsigned int no = octants.size();
-        //     unsigned int ne = edges.size();
-            
-        //     fprintf(f,"%u %u %u %u\n\n", np, ne, no, nels);
-
-        //     //write points
-        //     for(unsigned int i=0;i<np;i++){
-        //         Point3D p = points[i].getPoint();
-        //         fprintf(f,"%+1.8E  %+1.8E  %+1.8E\n",p[0],p[1],p[2]);
-        //     }
-        //     fprintf(f,"\n");
-            
-        //     //write edeges
-        //     for(my_edge=edges.begin();my_edge!=edges.end();my_edge++){
-        //         OctreeEdge me = *my_edge;
-        //         fprintf(f,"%i %i %i\n",me[0],me[1],me[2]);
-        //     }
-        //     fprintf(f,"\n");
-            
-        //     //pair sub-elements with octant index.
-        //     //this info is printed per octant and the elements are
-        //     //printed in order in the mesh file so we can compute
-        //     //for each element to which octant it belongs.
-        //     for (unsigned int i=0; i<octants.size(); i++) {
-        //         unsigned int nse = octants[i].getSubElements().size();
-        //         fprintf(f,"%u ",nse);
-        //     }
-        //     fprintf(f,"\n\n");
-            
-        //     for (unsigned int i=0; i<octants.size(); i++) {
-        //         vector<unsigned int> opts = octants[i].getPoints();
-        //         unsigned int nopts = opts.size();
-        //         if (nopts<8) {
-        //             cerr << "warning at Services::WriteOctreeMesh\n";
-        //             cerr << "        Octant has less than 8 nodes\n";
-        //             fprintf(f,"%u ",nopts);
-        //         }
-        //         else {
-        //             nopts=8;
-        //             fprintf(f,"8 ");
-        //         }
-        //         for (unsigned int j=0; j<nopts; j++) {
-        //             fprintf(f,"%u ",opts[j]);
-        //         }
-        //         fprintf(f,"%u\n",octants[i].getRefinementLevel());
-        //         list<unsigned int> ofcs = octants[i].getIntersectedFaces();
-        //         list<unsigned int>::iterator fiter;
-        //         nopts = ofcs.size();
-        //         fprintf(f,"%u",nopts);
-        //         for (fiter=ofcs.begin(); fiter!=ofcs.end(); fiter++) {
-        //             fprintf(f," %u",*fiter);
-        //         }
-        //         fprintf(f,"\n");
-        //     }
-            
-        //     fprintf(f,"\nGeometric Transform\n");
-        //     Point3D c = gt.getCentroid();
-        //     fprintf(f,"%f %f %f\n",c[0],c[1],c[2]);
-        //     fprintf(f,"%f %f %f\n",gt.getXAxis(),gt.getYAxis(),gt.getZAxis());
-            
-        //     fclose(f);
-            
-        //     return true;
-        // }
-        
         //-------------------------------------------------------------------
         //-------------------------------------------------------------------
         static bool WritePLY(std::string name, FEMesh &output){

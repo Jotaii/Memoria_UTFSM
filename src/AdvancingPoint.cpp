@@ -1,11 +1,6 @@
-#include "Mesher.h"
 #include "TriMesh.h"
 #include "FEMesh.h"
 #include "Services.h"
-#include "RefinementCubeRegion.h"
-#include "RefinementSurfaceRegion.h"
-#include "RefinementInputSurfaceRegion.h"
-#include "RefinementAllRegion.h"
 #include "Point3D.h"
 #include "OPoint3D.h"
 #include "NodeProjection.h"
@@ -27,45 +22,8 @@
 #include<math.h>
 
 
-using Clobscode::RefinementRegion;
-using Clobscode::RefinementCubeRegion;
-using Clobscode::RefinementSurfaceRegion;
 using Clobscode::Point3D;
 using Clobscode::TriMesh;
-
-
-
-/* 
-Funcion para filtrar malla de volumen
-input: archivo.oct
-output: archivo de formato conveniente
-funcionamiento:
-    1. obtener las caras de la malla de volumen
-    2. usar funcion getFaces de Services.h para obtener las caras de la malla
-    3. filtrar las caras que solo pertenezcan a un elemento geometrico
-    4. retornar los vectores de nodos y los vectores de caras.
-*/
-
-/*
-Funcion para calcular las normales por nodo:
-input: vector de nodos y vector de caras
-output: vector con las normales de cada nodo
-funcionamiento:
-    1. para cada nodo, buscar todas las caras que lo contienen (almacenarlas en un vector dentro de un nuevo objeto creado para la memoria)
-    2. por cada nodo, almacenar en un vector las normales preliminares (correspondiente a las normales por cara para cada nodo)
-    3. para cada nodo, promediar las normales preliminares (sum(normales)/cantidad_normales)
-    4. para cada nodo, normalizar el vector anterior.
-    5. regresar el vector con la estructura nueva que tiene la normal de cada nodo
-*/
-
-/*
-Funcion para proyectar los nuevos puntos
-input: vector de estructuras nuevas, vector de puntos, vector de caras
-output: vector de nodos, vector de vectores con elementos de volumen
-funcionamiento:
-    1. para cada normal en la estructura de nodos, agregar a la lista de puntos los nodos nuevos
-    2. para cada nodo de ... 
-*/
 
 using namespace std;
 using std::atoi;
@@ -76,18 +34,31 @@ using std::vector;
 using std::string;
 
 
+/*
+AdvancingPoint
+Resumen: Funcion que consolida todo el proceso de expansion exterior enfocada en nodos
+Inputs: 
+        - Puntos: arreglo de Point3D entregados por archivo de entrada.
+        - VUI: arreglo que contiene los vectores de puntos correspondientes a las caras superficiales de la malla de entrada
+        - dist: utilidad opcional para modificar la distancia de la expansion (asociada a parametro -e)
+        - num_layers: utilidad opcional para modificar la cantidad de capas expandidas (asociada a parametro -l)
+        - Whitelist_faces: vector con los indices de las caras a expandir (asociada al parametro -f)
+        - distance_multiplier: utilidad opcional para modificar tasa de distancia entre capas expandidas (asociada a parametro -x)
+        - faces_whitelist_given: argumento opcional configurado automaticamente para realizar verificaciones de ejecucion.
 
+Retorno: Se retorna un objeto que posee los arreglos conrrespondientes a toda la generacion de nuevos elementos asociados a la expansion.
+*/
 AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist, unsigned int num_layers, vector <unsigned int> Whitelist_faces, float distance_multiplier, bool faces_whitelist_given){
     
 
     vector <Face> FVector;
-    for (int i=0;i<VUI.size(); i++){
+    for (unsigned int i=0;i<VUI.size(); i++){
         Face Ftemp(VUI[i]);
         FVector.push_back(Ftemp);
     }
 
     NormalRepair NR = NormalRepair(Puntos, FVector);
-        
+
     vector < vector <unsigned int>> VUI2;
     
     vector <Face> NRF;
@@ -96,12 +67,6 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
         for (long unsigned int i=0; i < VUI.size(); i++){
             // filter whitelist v2
             if (Whitelist_faces[i] == 1){
-                // VUI.erase(VUI.begin() + i);
-                // cout << "Agregando cara: [";
-                // for (unsigned K=0; K<NR.getFaces()[i].getPoints().size();K++){
-                    // cout<< NR.getFaces()[i].getPoints()[K]<< ",";
-                // }
-                // cout << "]\n";
                 FVector.push_back(NR.getFaces()[i]);
                 VUI2.push_back(VUI[i]);
             }
@@ -114,52 +79,26 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
         NRF = NR.getFaces();
     }
 
-    
-    // for (int i=0;i<VUI2.size(); i++){
-    //     Face Ftemp(VUI2[i]);
-    //     FVector.push_back(Ftemp);
-    // }
-
-    
-
-    // std::cout << "Numero de Nodos: " << Puntos.size() << "\n";
-    // std::cout << "Numero de caras: " << FVector.size() << "\n";
-
 
     vector <unsigned int> nodesInSurface; //1 si el nodo i-esimo esta en la superficie, 0 en caso contrario
     vector <unsigned int> pointsInWhitelist; //1 si el nodo i-esimo esta en la whitelist, 0 en caso contrario
     
-    for (int i=0; i< Puntos.size();i++){
+    for (unsigned int i=0; i< Puntos.size();i++){
         nodesInSurface.push_back(0);
         if (faces_whitelist_given){
-            // cout << "agregando i: " << i << "porque whitelist size es: " << Whitelist_faces.size() << "\n";
             pointsInWhitelist.push_back(1);
         }
         else
         pointsInWhitelist.push_back(0);
     }
 
-    
-    //aqui esta el problema
-    // unsigned int wListCounter;
-    // for (unsigned int i=0; i<VUI.size(); i++){
-    //     wListCounter = wListCounter + Whitelist_faces[i];
-    // }
-    // cout<<VUI2.size() << "\n";
-    // cout<<wListCounter << "\n";
-    // if (Whitelist_faces.size()>0){
     for (unsigned int i=0; i<VUI2.size(); i++){
-        // if (Whitelist_faces[i] == 1){
         for(unsigned int j=0; j<VUI2[i].size(); j++){
             if (pointsInWhitelist[VUI2[i][j]] == 0){
                 pointsInWhitelist.at(VUI2[i][j]) = 1;
             }
         }
-        // }
     }
-    // }
-    
-    
     
     for (unsigned int fidx=0; fidx< FVector.size(); fidx++){        
         for (unsigned int nidx=0; nidx < nodesInSurface.size(); nidx++){
@@ -168,13 +107,6 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
             }
         }
     }
-    // cout << "FaceVector: " << VUI2.size() << "\n";
-    // cout << "Puntos: " << Puntos.size() << "\n";
-
-    
-    
-    // //BORRAR
-    // vector <Face> NRF = FVector;
 
     vector <NodeProjection> NodeProjectionVector;
     NodeProjectionVector.reserve(Puntos.size());
@@ -182,27 +114,22 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
 
     vector <NewPointRef> NPR_arr;
     
-    // Funcion que inicializa un objeto del tipo NodeProjection
+    // Inicializacion de objeto NodeProjection
     for (unsigned int i=0; i<Puntos.size(); i++){
         if (deb==0){
             if (nodesInSurface[i] == 1 && pointsInWhitelist[i] == 1){
-                // cout << " " << i << "\n";
                 NodeProjection NP(i, Puntos[i], NRF, Whitelist_faces);
                 
                 if (NP.getFacesInvolved().size() > 0){
                     
                     NP.CalcPreNormal(Puntos, 0);
-
                     NP.Normalize();
-                    
                     NodeProjectionVector.push_back(NP);
 
+                    //condicional en caso de problemas en normales 
                     if(isnan(NP.getNormal().X()) || isnan(NP.getNormal().Y()) || isnan(NP.getNormal().Z())){
-                        
                         NP.CalcPreNormal(Puntos,1);
-                        
                     }
-                    
                     
                 }
             }
@@ -225,7 +152,6 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
                 NP.Normalize();
                 std::cout << "OK\n\n";
                 // Funcion de utilidad que imprime toda la informacion en el objeto NP
-                // NP.print();
                 NodeProjectionVector.push_back(NP);
             }
             else {
@@ -239,91 +165,44 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
         
     }
 
-    //TESTING, BORRAR DESPUES
-    // for(unsigned int i=0; i<NodeProjectionVector.size(); i++){
-    //     cout << NodeProjectionVector[i].getNodeIndex() << " @ " << NodeProjectionVector[i].getNormal() << "\n";
-    // }
-
     //RECORRER PROYECCIONES, NO PUNTOS
-    //generacion de puntos nuevos
-    unsigned int original_points = Puntos.size();
+    // generacion de puntos nuevos
     unsigned int offset = 0;
     unsigned int father_offset=0;
     for (unsigned int layer=1; layer <= num_layers; layer++){
         for (unsigned int pointIdx = 0; pointIdx < NodeProjectionVector.size(); pointIdx++){
-            // if (nodesInSurface[pointIdx] == 1 && pointsInWhitelist[pointIdx] == 1){
-                // cout << "Pointidx: " << pointIdx << "\n";
-                Point3D newPoint(Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].X()+(layer*dist*NodeProjectionVector[pointIdx].getNormal().X()*pow(distance_multiplier,layer)),   //si no funciona sacar el layer*
-                            Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].Y()+(layer*dist*NodeProjectionVector[pointIdx].getNormal().Y()*pow(distance_multiplier,layer)),        //si no funciona sacar el layer*
-                            Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].Z()+(layer*dist*NodeProjectionVector[pointIdx].getNormal().Z()*pow(distance_multiplier,layer)));       //si no funciona sacar el layer*
+                Point3D newPoint(
+                    Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].X()+
+                        (layer*dist*NodeProjectionVector[pointIdx].getNormal().X()*pow(distance_multiplier,layer)),   
+                    Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].Y()+
+                        (layer*dist*NodeProjectionVector[pointIdx].getNormal().Y()*pow(distance_multiplier,layer)),        
+                    Puntos[NodeProjectionVector[pointIdx].getNodeIndex()].Z()+
+                        (layer*dist*NodeProjectionVector[pointIdx].getNormal().Z()*pow(distance_multiplier,layer)));       
                 this -> new_points.push_back(newPoint); //posibilidad de tener que borrar este arreglo para dejarle la carga a la estructura NewPointRef
 
                 if (layer == 1){
-                    NewPointRef NewNode(Puntos.size()+offset, NodeProjectionVector[pointIdx].getNodeIndex(), newPoint); // NEW - EXPERIMENTAL
-                    // cout << "Layer: "<< layer << "\nAgregando nodo\nNodeIndex: "<< Puntos.size()+offset << "\nFatherIndex: " << NodeProjectionVector[pointIdx].getNodeIndex()+(Puntos.size()*(layer-1)) << "\nPunto: " << newPoint << "\n---\n";
+                    NewPointRef NewNode(Puntos.size()+offset, NodeProjectionVector[pointIdx].getNodeIndex(), newPoint); 
                     NPR_arr.push_back(NewNode);
                 }
                 else{
-                    NewPointRef NewNode(Puntos.size()+offset, Puntos.size()+father_offset, newPoint); // NEW - EXPERIMENTAL
-                    // cout << "\nLayer: "<< layer << "\nAgregando nodo\nNodeIndex: "<< Puntos.size()+offset << "\tFatherIndex: " << Puntos.size()+father_offset << "\tPunto: " << newPoint << "\n";
+                    NewPointRef NewNode(Puntos.size()+offset, Puntos.size()+father_offset, newPoint); 
                     NPR_arr.push_back(NewNode);
                     father_offset ++;
                 }
-                // NewPointRef NewNode(Puntos.size()+offset, NodeProjectionVector[pointIdx].getNodeIndex(), newPoint); // NEW - EXPERIMENTAL
-                // NPR_arr.push_back(NewNode);
+                
                 offset++;
 
                 
-            // }
+         
         }
     }
-    // cout << "NPR Size: " << NPR_arr.size() << "\n";
+    
     this -> normals = NodeProjectionVector;
     this -> arr_points = Puntos;
     this -> arr_faces = VUI2;
 
-    // cout << "VUI at end: " << VUI.size() << "\n";
-    // cout << "num_layers: " << num_layers << "\n";
-    // //debuger, borrar despues de utilizar
-    // for (unsigned int lay=1; lay<=num_layers; lay++){
-    //     cout << "lay = " << lay << "\n";
-    //     for(unsigned int i=NPR_arr.size()*(lay-1); i< NPR_arr.size();i++){
-    //         cout << "El punto nuevo de indice " << NPR_arr[i].getIndex() << " tiene por padre al nodo " << NPR_arr[i].getFIndex()+Puntos.size()*(lay-1)<< "\n";
-    //     }
-    //     cout << "outlay\n";
-    // }
+
     
-
-    // cout << "--OLD--\n";
-    // for(int i=0; i< this->arr_faces.size(); i++){
-    //     cout << "[";
-    //     for(int j=0; j < this->arr_faces[i].size(); j++){
-    //         cout << this->arr_faces[i][j] << " ";
-    //     }
-        
-    //     cout << "]\n";
-    // }
-
-    // ------------------------ EXPERIMENTAL ----------------------------------
-    //si layer pendientes > 0, crear nuevo elemento en arr_faces 
-    //con los puntos iniciales correspondiente a la cara anterior
-    
-    // for (unsigned int checkedLayers=1; checkedLayers<=num_layers; checkedLayers++){
-    //     vector <unsigned int> newElemsByLayer;
-    //     cout << "newlayer \n";
-    //     for (unsigned int i=NPR_arr.size()*(checkedLayers-1)/num_layers;
-    //             i < NPR_arr.size()*checkedLayers/num_layers;i++){
-    //         for (unsigned int k=0; k<NPR_arr.size(); k++){
-    //             if(NPR_arr[k].getIndex()== i+Puntos.size()){
-    //                 cout << i+Puntos.size() << "->" << NPR_arr[k].getFIndex() << "\n";
-    //             }
-    //         }
-            
-    //     }
-    // }
-    //-----------------------------------------------------------------------------------
-
-    //primera proyeccion REVISAR ESTA FUNCION QUE SE MURIO AL AGREGAR LO DE CONSIDERACION DE WHITELIST!!
     unsigned int layer_check = 1;
     unsigned int initial_faces_offset = this->arr_faces.size();
     vector <unsigned int> newfacePerLayer;
@@ -335,25 +214,18 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
             cout << "[DEBUG] init next for: " << initial_faces_offset*(layer_check-1) << "\n";
         }
         for (unsigned int face_idx=initial_faces_offset*(layer_check-1); face_idx < initial_faces_offset*layer_check; face_idx++){
-            // cout << "(" << arr_faces.size() << ")\n";
-            // cout << "Revisando la cara " << face_idx << " \n";
-            // if (Whitelist_faces[face_idx] == 1 || Whitelist_faces.size()==0 || face_idx>=Whitelist_faces.size()){
+            
                 unsigned int n_nodes = this->arr_faces[face_idx].size();
-                // cout << "Para cara de indice " << face_idx << " Se revisan los " << n_nodes << " nodos de la misma\n";
+                
                 newfacePerLayer = {};
                 for(unsigned int node_face_rel=0; node_face_rel < n_nodes; node_face_rel++){
-                    //esto es SUPER ineficiente, corregir para disminuir el computo
-                    // cout << "Numero nodos: " << n_nodes << "\n";
-                    for(unsigned int i=0; i< NPR_arr.size();i++){ //ERROR, se solapan las layers!!!!!!!!!!!!
-                        // cout << "Buscando vertice: " << arr_faces[face_idx][node_face_rel] << "\n";
-                        // cout << "Buscando: " << arr_faces[face_idx][node_face_rel] << " Revisando indice: " << NPR_arr[i].getIndex() << " Con padre: " << NPR_arr[i].getFIndex() << "\n";
+                    
+                    for(unsigned int i=0; i< NPR_arr.size();i++){ 
                         if (NPR_arr[i].getFIndex() == arr_faces[face_idx][node_face_rel]){
-                            // cout << "    Adding: " << NPR_arr[i].getIndex() << " to face " << face_idx << "\n";
+                            
                             this->arr_faces[face_idx].push_back(NPR_arr[i].getIndex());
-                            // cout << "    Numlayers: " << num_layers << " | LayerCheck: " << layer_check << "\n";
-                            //revisar si este condicional va aca o va en otro lado
+                           
                             if (layer_check < num_layers){
-                                // cout << "    ** NewFaceIndex: " << NPR_arr[i].getIndex()+(initial_faces_offset*layer_check-1) << "\n";
                                 newfacePerLayer.push_back(NPR_arr[i].getIndex());
                             }
                             break;
@@ -362,31 +234,16 @@ AdvancingPoint::AdvancingPoint(vector<Clobscode::Point3D> &Puntos, vector<vector
                 }
 
                 if (newfacePerLayer.size()>0 && layer_check < num_layers){
-                    // cout<<"[DEBUG] NewFaceSize: "<<newfacePerLayer.size()<<"\n";
                     this->arr_faces.push_back(newfacePerLayer);
-                }
-            // }
-            
+                }          
 
         }
         
     }
     
-    
-
-    // cout << "--NEW--\n";
-    // for(int i=0; i< this->arr_faces.size(); i++){
-    //     cout << "[";
-    //     for(int j=0; j < this->arr_faces[i].size(); j++){
-    //         cout << this->arr_faces[i][j] << " ";
-    //     }
-    //     cout << "]\n";
-    // }
-    
-    
-    
 }
 
+//Getters
 vector <vector<unsigned int>> AdvancingPoint::getFaces(){ return this->arr_faces;}
 vector <Point3D> AdvancingPoint::getPoints(){return this->arr_points;}
 vector <Point3D> AdvancingPoint::getNewPoints(){return this->new_points;}

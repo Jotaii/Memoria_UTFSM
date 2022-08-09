@@ -15,9 +15,6 @@
 #include <iostream>
 
 
-using Clobscode::RefinementRegion;
-using Clobscode::RefinementCubeRegion;
-using Clobscode::RefinementSurfaceRegion;
 using Clobscode::Point3D;
 using Clobscode::TriMesh;
 
@@ -40,7 +37,6 @@ class AdvancingPoint{
         vector <vector <unsigned int>>  arr_faces;
 
     public:
-        //probablemente a esta funcion haya que agregarle los parametros de whitelist de caras, distancia y cantidad de iteraciones.
         AdvancingPoint(vector <Point3D> &Puntos, vector<vector<unsigned int>> &VUI, float dist=1,
                         unsigned int num_layers=1, vector <unsigned int> Whitelist_faces = {},
                         float distance_multiplier=1, bool faces_whitelist_given=false);
